@@ -1,0 +1,110 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Script Visual DOM"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "LJS mutates visual attributes on mini DOM elements"
+  END element:head
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:fontFace TOKEN value:TFontFace:sans
+    ATTR attr:fontSize TOKEN value:TFontSize:normal
+    ATTR attr:background INLINE_VALUE color "#F7F8FA"
+    ATTR attr:color INLINE_VALUE color "#20242A"
+    START element:block
+      ATTR attr:id INLINE_VALUE string "statusPanel"
+      ATTR attr:width INLINE_VALUE uint "360"
+      ATTR attr:background INLINE_VALUE color "#FFFFFF"
+      ATTR attr:border INLINE_VALUE color "#AAAAAA"
+      ATTR attr:borderWidth INLINE_BYTE 1
+      ATTR attr:padding INLINE_BYTE 10
+      ATTR attr:color INLINE_VALUE color "#303030"
+      TEXT "Status panel starts neutral and is recolored by script."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:block
+      ATTR attr:id INLINE_VALUE string "alertPanel"
+      ATTR attr:width INLINE_VALUE uint "360"
+      ATTR attr:background INLINE_VALUE color "#FFFFFF"
+      ATTR attr:border INLINE_VALUE color "#AAAAAA"
+      ATTR attr:borderWidth INLINE_BYTE 1
+      ATTR attr:padding INLINE_BYTE 10
+      ATTR attr:color INLINE_VALUE color "#303030"
+      TEXT "Alert panel also receives a stronger border."
+    END element:block
+  END element:body
+  COMMAND SCRIPT_BEGIN
+    LJS kw:let
+    LJS identifier:status
+    LJS op:=
+    LJS identifier:Document
+    LJS punct:.
+    LJS identifier:getElement
+    LJS punct:(
+    LJS string:"statusPanel"
+    LJS punct:)
+    LJS punct:;
+    LJS identifier:status
+    LJS punct:.
+    LJS identifier:color
+    LJS op:=
+    LJS string:"#104020"
+    LJS punct:;
+    LJS identifier:status
+    LJS punct:.
+    LJS identifier:background
+    LJS op:=
+    LJS string:"#E9F7EF"
+    LJS punct:;
+    LJS identifier:status
+    LJS punct:.
+    LJS identifier:border
+    LJS op:=
+    LJS string:"#23884A"
+    LJS punct:;
+    LJS identifier:status
+    LJS punct:.
+    LJS identifier:borderWidth
+    LJS op:=
+    LJS number:2
+    LJS punct:;
+    LJS kw:let
+    LJS identifier:alert
+    LJS op:=
+    LJS identifier:Document
+    LJS punct:.
+    LJS identifier:getElement
+    LJS punct:(
+    LJS string:"alertPanel"
+    LJS punct:)
+    LJS punct:;
+    LJS identifier:alert
+    LJS punct:.
+    LJS identifier:color
+    LJS op:=
+    LJS string:"#5A1800"
+    LJS punct:;
+    LJS identifier:alert
+    LJS punct:.
+    LJS identifier:background
+    LJS op:=
+    LJS string:"#FFF4D6"
+    LJS punct:;
+    LJS identifier:alert
+    LJS punct:.
+    LJS identifier:border
+    LJS op:=
+    LJS string:"#C04A00"
+    LJS punct:;
+    LJS identifier:alert
+    LJS punct:.
+    LJS identifier:borderWidth
+    LJS op:=
+    LJS number:3
+    LJS punct:;
+  END SCRIPT
+END element:lhtml

@@ -1,0 +1,32 @@
+<lhtml version=1>
+<head>
+  <title>Script Visual DOM</title>
+  <meta name="description" content="LJS mutates visual attributes on mini DOM elements">
+</head>
+
+<body font=sans,normal background=#F7F8FA color=#20242A>
+  <block id="statusPanel" width=360 background=#FFFFFF border=#AAAAAA borderWidth=1 padding=10 color=#303030>
+    Status panel starts neutral and is recolored by script.
+  </block>
+
+  <spacer height=12>
+
+  <block id="alertPanel" width=360 background=#FFFFFF border=#AAAAAA borderWidth=1 padding=10 color=#303030>
+    Alert panel also receives a stronger border.
+  </block>
+</body>
+
+<script>
+  let status = Document.getElement("statusPanel");
+  status.color = "#104020";
+  status.background = "#E9F7EF";
+  status.border = "#23884A";
+  status.borderWidth = 2;
+
+  let alert = Document.getElement("alertPanel");
+  alert.color = "#5A1800";
+  alert.background = "#FFF4D6";
+  alert.border = "#C04A00";
+  alert.borderWidth = 3;
+</script>
+</lhtml>

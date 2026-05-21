@@ -10,7 +10,8 @@ implementation
 
 uses
   SysUtils, Classes, LhtDom, LhtParser, LhtDump, LhtTokenDump, LhtBinaryEncode,
-  LhtBinaryDecode, LhtBinaryDump, LhtRender, LhtTokenTable, LhtScriptRuntime;
+  LhtBinaryDecode, LhtBinaryDump, LhtRender, LhtDisplayList, LhtRenderTypes,
+  LhtDebugFont, LhtTokenTable, LhtScriptRuntime;
 
 function LoadTextFile(const FileName: string): string;
 var
@@ -485,6 +486,7 @@ begin
   RunCheckExample('examples\style-class-basic');
   RunCheckExample('examples\table-basic');
   RunCheckExample('examples\script-basic');
+  RunCheckExample('examples\script-visual-dom');
   RunCheckValidation;
   RunCheckScriptRuntime;
 end;
@@ -711,6 +713,22 @@ begin
   end;
 end;
 
+function DisplayListHasOwnerColor(List: TLhtDisplayList; Owner: TNode;
+  Kind: TLhtDisplayCommandKind; const HexColor: string): Boolean;
+var
+  I: Integer;
+  Cmd: TLhtDisplayCommand;
+begin
+  for I := 0 to List.Count - 1 do
+  begin
+    Cmd := List.Command(I);
+    if (Cmd.Owner = Owner) and (Cmd.Kind = Kind) and
+       (ColorToHex(Cmd.Color) = HexColor) then
+      Exit(True);
+  end;
+  Result := False;
+end;
+
 procedure ExpectDocumentScriptDomMutation;
 var
   Parser: TLhtParser;
@@ -740,6 +758,46 @@ begin
   finally
     Root.Free;
     Parser.Free;
+  end;
+end;
+
+procedure ExpectScriptVisualDomExampleRender;
+var
+  Root, StatusPanel, AlertPanel: TNode;
+  DisplayList: TLhtDisplayList;
+  Font: TLhtDebugFont;
+begin
+  Root := ParseFile('examples\script-visual-dom\index.lht');
+  try
+    ExecuteDocumentScripts(Root);
+    StatusPanel := FindNodeById(Root, 'statusPanel');
+    AlertPanel := FindNodeById(Root, 'alertPanel');
+    if (StatusPanel = nil) or (AlertPanel = nil) then
+      raise Exception.Create('script visual DOM example lost panel node');
+
+    DisplayList := TLhtDisplayList.Create;
+    Font := TLhtDebugFont.Create;
+    try
+      BuildMiniDisplayList(Root, DisplayList, Font, 640, 720);
+      if not DisplayListHasOwnerColor(DisplayList, StatusPanel, dckFillRect,
+        '#E9F7EF') then
+        raise Exception.Create('script visual DOM example render missed status background');
+      if not DisplayListHasOwnerColor(DisplayList, StatusPanel, dckStrokeRect,
+        '#23884A') then
+        raise Exception.Create('script visual DOM example render missed status border');
+      if not DisplayListHasOwnerColor(DisplayList, AlertPanel, dckFillRect,
+        '#FFF4D6') then
+        raise Exception.Create('script visual DOM example render missed alert background');
+      if not DisplayListHasOwnerColor(DisplayList, AlertPanel, dckStrokeRect,
+        '#C04A00') then
+        raise Exception.Create('script visual DOM example render missed alert border');
+    finally
+      Font.Free;
+      DisplayList.Free;
+    end;
+    WriteLn('OK script runtime script visual DOM example render');
+  finally
+    Root.Free;
   end;
 end;
 
@@ -790,6 +848,7 @@ begin
     'CANVAS: strokeRect 3 4 50 60' + #10, Profile);
   ExpectDomVisualMutation;
   ExpectDocumentScriptDomMutation;
+  ExpectScriptVisualDomExampleRender;
   Profile := DefaultLjsRuntimeProfile;
   ExpectScriptRuntimeProfileFail('dom visual capability not enabled',
     'let el = Document.getElement("warning");',

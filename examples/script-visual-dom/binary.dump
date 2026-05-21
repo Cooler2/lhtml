@@ -1,0 +1,178 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 11 53 63 72 69 70 74 20 56 69 73 75 61 6C 20 44 4F 4D  INLINE_VALUE text "Script Visual DOM"
+002A  00                  END
+002B  08                  element:meta
+002C  21                  attr:name
+002D  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+003B  22                  attr:content
+003C  03 84 32 4C 4A 53 20 6D 75 74 61 74 65 73 20 76 69 73 75 61 6C 20 61 74 74 72 69 62 75 74 65 73 20 6F 6E 20 6D 69 6E 69 20 44 4F 4D 20 65 6C 65 6D 65 6E 74 73  INLINE_VALUE string "LJS mutates visual attributes on mini DOM elements"
+0071  00                  END
+0072  02 04               COMMAND BODY_BEGIN
+0074  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+0078  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+007C  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+0080  01                  START
+0081  05                  element:body
+0082  27                  attr:fontFace
+0083  41                  value:TFontFace:sans
+0084  28                  attr:fontSize
+0085  46                  value:TFontSize:normal
+0086  2A                  attr:background
+0087  03 82 DF F7         INLINE_VALUE color #F6FAFF
+008B  29                  attr:color
+008C  03 82 25 21         INLINE_VALUE color #202429
+0090  01                  START
+0091  06                  element:block
+0092  23                  attr:id
+0093  03 84 0B 73 74 61 74 75 73 50 61 6E 65 6C  INLINE_VALUE string "statusPanel"
+00A1  24                  attr:width
+00A2  03 80 E8 02         INLINE_VALUE uint 360
+00A6  2A                  attr:background
+00A7  03 82 FF FF         INLINE_VALUE color #FFFFFF
+00AB  2B                  attr:border
+00AC  03 82 55 AD         INLINE_VALUE color #ACAAAC
+00B0  2D                  attr:borderWidth
+00B1  04 01               INLINE_BYTE 1
+00B3  2C                  attr:padding
+00B4  04 0A               INLINE_BYTE 10
+00B6  29                  attr:color
+00B7  03 82 86 31         INLINE_VALUE color #313031
+00BB  03 85 37 53 74 61 74 75 73 20 70 61 6E 65 6C 20 73 74 61 72 74 73 20 6E 65 75 74 72 61 6C 20 61 6E 64 20 69 73 20 72 65 63 6F 6C 6F 72 65 64 20 62 79 20 73 63 72 69 70 74 2E  INLINE_VALUE text "Status panel starts neutral and is recolored by script."
+00F5  00                  END
+00F6  08                  element:spacer
+00F7  25                  attr:height
+00F8  04 0C               INLINE_BYTE 12
+00FA  01                  START
+00FB  06                  element:block
+00FC  23                  attr:id
+00FD  03 84 0A 61 6C 65 72 74 50 61 6E 65 6C  INLINE_VALUE string "alertPanel"
+010A  24                  attr:width
+010B  03 80 E8 02         INLINE_VALUE uint 360
+010F  2A                  attr:background
+0110  03 82 FF FF         INLINE_VALUE color #FFFFFF
+0114  2B                  attr:border
+0115  03 82 55 AD         INLINE_VALUE color #ACAAAC
+0119  2D                  attr:borderWidth
+011A  04 01               INLINE_BYTE 1
+011C  2C                  attr:padding
+011D  04 0A               INLINE_BYTE 10
+011F  29                  attr:color
+0120  03 82 86 31         INLINE_VALUE color #313031
+0124  03 85 2C 41 6C 65 72 74 20 70 61 6E 65 6C 20 61 6C 73 6F 20 72 65 63 65 69 76 65 73 20 61 20 73 74 72 6F 6E 67 65 72 20 62 6F 72 64 65 72 2E  INLINE_VALUE text "Alert panel also receives a stronger border."
+0153  00                  END
+0154  00                  END
+0155  02 06               COMMAND SCRIPT_BEGIN
+0157  02 00 06 1E         COMMAND IMPORT dict=6 count=30 ; LJS in SCRIPT
+015B  05                  LJS kw:let
+015C  1F                  LJS literal:identifier
+015D  03 84 06 73 74 61 74 75 73  INLINE_VALUE string "status"
+0166  0C                  LJS op:=
+0167  1F                  LJS literal:identifier
+0168  03 84 08 44 6F 63 75 6D 65 6E 74  INLINE_VALUE string "Document"
+0173  34                  LJS punct:.
+0174  1F                  LJS literal:identifier
+0175  03 84 0A 67 65 74 45 6C 65 6D 65 6E 74  INLINE_VALUE string "getElement"
+0182  17                  LJS punct:(
+0183  30                  LJS literal:string
+0184  03 84 0B 73 74 61 74 75 73 50 61 6E 65 6C  INLINE_VALUE string "statusPanel"
+0192  18                  LJS punct:)
+0193  1B                  LJS punct:;
+0194  1F                  LJS literal:identifier
+0195  03 84 06 73 74 61 74 75 73  INLINE_VALUE string "status"
+019E  34                  LJS punct:.
+019F  1F                  LJS literal:identifier
+01A0  03 84 05 63 6F 6C 6F 72  INLINE_VALUE string "color"
+01A8  0C                  LJS op:=
+01A9  30                  LJS literal:string
+01AA  03 84 07 23 31 30 34 30 32 30  INLINE_VALUE string "#104020"
+01B4  1B                  LJS punct:;
+01B5  1F                  LJS literal:identifier
+01B6  03 84 06 73 74 61 74 75 73  INLINE_VALUE string "status"
+01BF  34                  LJS punct:.
+01C0  1F                  LJS literal:identifier
+01C1  03 84 0A 62 61 63 6B 67 72 6F 75 6E 64  INLINE_VALUE string "background"
+01CE  0C                  LJS op:=
+01CF  30                  LJS literal:string
+01D0  03 84 07 23 45 39 46 37 45 46  INLINE_VALUE string "#E9F7EF"
+01DA  1B                  LJS punct:;
+01DB  1F                  LJS literal:identifier
+01DC  03 84 06 73 74 61 74 75 73  INLINE_VALUE string "status"
+01E5  34                  LJS punct:.
+01E6  1F                  LJS literal:identifier
+01E7  03 84 06 62 6F 72 64 65 72  INLINE_VALUE string "border"
+01F0  0C                  LJS op:=
+01F1  30                  LJS literal:string
+01F2  03 84 07 23 32 33 38 38 34 41  INLINE_VALUE string "#23884A"
+01FC  1B                  LJS punct:;
+01FD  1F                  LJS literal:identifier
+01FE  03 84 06 73 74 61 74 75 73  INLINE_VALUE string "status"
+0207  34                  LJS punct:.
+0208  1F                  LJS literal:identifier
+0209  03 84 0B 62 6F 72 64 65 72 57 69 64 74 68  INLINE_VALUE string "borderWidth"
+0217  0C                  LJS op:=
+0218  31                  LJS literal:number
+0219  03 84 01 32         INLINE_VALUE string "2"
+021D  1B                  LJS punct:;
+021E  05                  LJS kw:let
+021F  1F                  LJS literal:identifier
+0220  03 84 05 61 6C 65 72 74  INLINE_VALUE string "alert"
+0228  0C                  LJS op:=
+0229  1F                  LJS literal:identifier
+022A  03 84 08 44 6F 63 75 6D 65 6E 74  INLINE_VALUE string "Document"
+0235  34                  LJS punct:.
+0236  1F                  LJS literal:identifier
+0237  03 84 0A 67 65 74 45 6C 65 6D 65 6E 74  INLINE_VALUE string "getElement"
+0244  17                  LJS punct:(
+0245  30                  LJS literal:string
+0246  03 84 0A 61 6C 65 72 74 50 61 6E 65 6C  INLINE_VALUE string "alertPanel"
+0253  18                  LJS punct:)
+0254  1B                  LJS punct:;
+0255  1F                  LJS literal:identifier
+0256  03 84 05 61 6C 65 72 74  INLINE_VALUE string "alert"
+025E  34                  LJS punct:.
+025F  1F                  LJS literal:identifier
+0260  03 84 05 63 6F 6C 6F 72  INLINE_VALUE string "color"
+0268  0C                  LJS op:=
+0269  30                  LJS literal:string
+026A  03 84 07 23 35 41 31 38 30 30  INLINE_VALUE string "#5A1800"
+0274  1B                  LJS punct:;
+0275  1F                  LJS literal:identifier
+0276  03 84 05 61 6C 65 72 74  INLINE_VALUE string "alert"
+027E  34                  LJS punct:.
+027F  1F                  LJS literal:identifier
+0280  03 84 0A 62 61 63 6B 67 72 6F 75 6E 64  INLINE_VALUE string "background"
+028D  0C                  LJS op:=
+028E  30                  LJS literal:string
+028F  03 84 07 23 46 46 46 34 44 36  INLINE_VALUE string "#FFF4D6"
+0299  1B                  LJS punct:;
+029A  1F                  LJS literal:identifier
+029B  03 84 05 61 6C 65 72 74  INLINE_VALUE string "alert"
+02A3  34                  LJS punct:.
+02A4  1F                  LJS literal:identifier
+02A5  03 84 06 62 6F 72 64 65 72  INLINE_VALUE string "border"
+02AE  0C                  LJS op:=
+02AF  30                  LJS literal:string
+02B0  03 84 07 23 43 30 34 41 30 30  INLINE_VALUE string "#C04A00"
+02BA  1B                  LJS punct:;
+02BB  1F                  LJS literal:identifier
+02BC  03 84 05 61 6C 65 72 74  INLINE_VALUE string "alert"
+02C4  34                  LJS punct:.
+02C5  1F                  LJS literal:identifier
+02C6  03 84 0B 62 6F 72 64 65 72 57 69 64 74 68  INLINE_VALUE string "borderWidth"
+02D4  0C                  LJS op:=
+02D5  31                  LJS literal:number
+02D6  03 84 01 33         INLINE_VALUE string "3"
+02DA  1B                  LJS punct:;
+02DB  00                  END SCRIPT
+02DC  00                  END SCRIPT
