@@ -181,6 +181,11 @@ Adopted semantics:
 - mutations that affect layout mark the document dirty;
 - re-layout/re-render happens after the current script or event handler returns.
 
+Implementation note: the first mini-runtime property slice deliberately starts
+with visual attributes only: `color`, `background`, `border`, and
+`borderWidth`. `text` remains deferred because text mutation crosses into
+text-run ownership and layout behavior.
+
 ### Classes
 
 ```js
@@ -410,11 +415,15 @@ order:
 1. Preserve current `cli-debug` host handler path as the test profile. Done.
 2. Add runtime value support for host object handles. Started with
    `Canvas.context()` returning a drawing-only context handle.
-3. Add property access AST/runtime support.
-4. Implement `getElement(id)` returning a weak element handle.
-5. Implement `el.text` read/write for text-hosting elements and spans.
-6. Add event handler dispatch for `onClick`/`click`.
-7. Add `document.on("error", ...)` after the top-level error model is wired.
+3. Add property assignment AST/runtime support. Started with visual writes on
+   element handles in the fake DOM sink.
+4. Implement `getElement(id)` returning a weak element handle. Started as
+   `Document.getElement(id)` in the mini runtime.
+5. Implement real document mutation for `color`, `background`, `border`, and
+   `borderWidth`.
+6. Later, implement `el.text` read/write for text-hosting elements and spans.
+7. Add event handler dispatch for `onClick`/`click`.
+8. Add `document.on("error", ...)` after the top-level error model is wired.
 
 This keeps the first browser bridge small while aligning it with the LHT spec
 direction.

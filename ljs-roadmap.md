@@ -119,7 +119,9 @@ Implemented scope:
 - member calls are expression nodes, so `Canvas.context()` can return a host
   object handle and `ctx.fillRect(...)` can dispatch through that handle;
 - `lcCanvasBasic` enables a first headless canvas drawing sink with `clear`,
-  `fillRect`, and `strokeRect`.
+  `fillRect`, and `strokeRect`;
+- `lcDomVisual` enables `Document.getElement(id)` and a first fake DOM visual
+  property sink for `color`, `background`, `border`, and `borderWidth`.
 
 Known limits:
 
@@ -257,6 +259,8 @@ Host API naming:
   binding without exposing every known host object.
 - host method arity belongs to the handler, not the parser; this keeps
   one-argument `Debug.log(value)` compatible with multi-argument canvas calls.
+- the first property-assignment support is intentionally visual-only; `text`
+  mutation is deferred until text-run and reflow behavior is pinned down.
 
 ## Slice 6: Script AST and Node Interpreter
 
@@ -322,7 +326,8 @@ Implemented scope:
 - `CliDebugLjsRuntimeProfile` includes the CLI host bindings, while
   `IsolatedLjsRuntimeProfile` exposes no host objects;
 - host bindings carry a handler kind; implemented handlers append output
-  records for CLI tests or create a drawing-only canvas context handle;
+  records for CLI tests, create a drawing-only canvas context handle, or create
+  an element handle for visual property writes;
 - profile capabilities gate which host bindings are registered;
 - every scope charges one frame-overhead slot;
 - every `let` variable and function parameter binding charges one slot;

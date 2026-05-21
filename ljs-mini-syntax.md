@@ -31,6 +31,11 @@ let ctx = Canvas.context();
 ctx.clear();
 ctx.fillRect(x, y, w, h);
 ctx.strokeRect(x, y, w, h);
+let el = Document.getElement("warning");
+el.color = "#C00000";
+el.background = "#FFFFCC";
+el.border = "#336699";
+el.borderWidth = 1;
 ```
 
 Supported expressions:
@@ -69,13 +74,20 @@ Canvas.context();
 ctx.clear();
 ctx.fillRect(x, y, w, h);
 ctx.strokeRect(x, y, w, h);
+Document.getElement(id);
+el.color = value;
+el.background = value;
+el.border = value;
+el.borderWidth = value;
 ```
 
 In the first CLI slice, debug names are `cli-debug` host bindings. Canvas is
-available only when the active profile enables `lcCanvasBasic`. These names are
-not language builtins: the active runtime profile registers the root host
-object and method names it wants to expose, and host object handles dispatch
-their own methods. Host method arity is checked by the selected handler.
+available only when the active profile enables `lcCanvasBasic`; visual element
+property writes are available only when the active profile enables
+`lcDomVisual`. These names are not language builtins: the active runtime
+profile registers the root host object and method names it wants to expose,
+and host object handles dispatch their own methods and property writes. Host
+method arity is checked by the selected handler.
 
 The namespaced shape keeps `Math.log()` available for logarithms and prepares
 the grammar for later host object calls.
@@ -87,6 +99,12 @@ Current profiles:
   output-record handlers.
 - profiles that enable `lcCanvasBasic`: `Canvas.context()` returns a
   drawing-only host object handle with `clear`, `fillRect`, and `strokeRect`.
+- profiles that enable `lcDomVisual`: `Document.getElement(id)` returns an
+  element handle whose first writable properties are `color`, `background`,
+  `border`, and `borderWidth`.
+
+The first visual property slice deliberately excludes `text`; text mutation is
+deferred until text-run and reflow behavior is explicit.
 
 Function call arity is permissive:
 

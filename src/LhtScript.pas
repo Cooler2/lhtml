@@ -7,8 +7,8 @@ interface
 type
   TLjsTokenKind = (ljsDict, ljsIdentifier, ljsString, ljsNumber);
   TLjsExprNodeKind = (lenToken, lenBinary, lenCall, lenMemberCall);
-  TLjsStatementKind = (lskLet, lskAssign, lskCall, lskIf, lskWhile,
-    lskFunction, lskReturn);
+  TLjsStatementKind = (lskLet, lskAssign, lskSetMember, lskCall, lskIf,
+    lskWhile, lskFunction, lskReturn);
 
   TLjsToken = record
     Kind: TLjsTokenKind;
@@ -38,6 +38,7 @@ type
     Kind: TLjsStatementKind;
     TokenIndex: Integer;
     Name: string;
+    MemberName: string;
     Params: array of string;
     Expr: TLjsExpression;
     Body: TLjsStatementList;
@@ -98,6 +99,7 @@ type
     function ParseStatementBody(AllowReturn: Boolean): TLjsStatementList;
     function ParseLet: Integer;
     function ParseAssign: Integer;
+    function ParseMemberAssign: Integer;
     function ParseHostObjectCall: Integer;
     function ParseReturn(AllowReturn: Boolean): Integer;
     function ParseWhile(AllowReturn: Boolean): Integer;
@@ -653,6 +655,7 @@ begin
   FAst.Nodes[Result].Kind := Kind;
   FAst.Nodes[Result].TokenIndex := TokenIndex;
   FAst.Nodes[Result].Name := '';
+  FAst.Nodes[Result].MemberName := '';
   SetLength(FAst.Nodes[Result].Params, 0);
   SetLength(FAst.Nodes[Result].Body, 0);
   SetLength(FAst.Nodes[Result].ElseBody, 0);
@@ -709,6 +712,22 @@ begin
   ExpectToken(FTokens, FIndex, 'op:=', 'Expected "=" in assignment');
   FAst.Nodes[Result].Expr := ParseExpressionUntil(';');
   ExpectToken(FTokens, FIndex, 'punct:;', 'Expected ";" after assignment');
+end;
+
+function TLjsStatementParser.ParseMemberAssign: Integer;
+begin
+  Result := AddNode(lskSetMember, FIndex);
+  FAst.Nodes[Result].Name := FTokens[FIndex].Value;
+  Inc(FIndex);
+  ExpectToken(FTokens, FIndex, 'punct:.', 'Expected "." in member assignment');
+  if (FIndex > High(FTokens)) or (FTokens[FIndex].Kind <> ljsIdentifier) then
+    raise Exception.CreateFmt('Expected member property identifier, got %s',
+      [TokenLabel(FTokens, FIndex)]);
+  FAst.Nodes[Result].MemberName := FTokens[FIndex].Value;
+  Inc(FIndex);
+  ExpectToken(FTokens, FIndex, 'op:=', 'Expected "=" in member assignment');
+  FAst.Nodes[Result].Expr := ParseExpressionUntil(';');
+  ExpectToken(FTokens, FIndex, 'punct:;', 'Expected ";" after member assignment');
 end;
 
 function TLjsStatementParser.ParseHostObjectCall: Integer;
@@ -804,7 +823,14 @@ begin
   else if FTokens[FIndex].Kind = ljsIdentifier then
   begin
     if IsDict(FIndex + 1, 'punct:.') then
-      Result := ParseHostObjectCall
+    begin
+      if (FIndex + 3 <= High(FTokens)) and
+         (FTokens[FIndex + 2].Kind = ljsIdentifier) and
+         IsDict(FIndex + 3, 'op:=') then
+        Result := ParseMemberAssign
+      else
+        Result := ParseHostObjectCall;
+    end
     else
       Result := ParseAssign;
   end

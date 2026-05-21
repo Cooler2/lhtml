@@ -8,8 +8,8 @@ uses
   LhtScript;
 
 type
-  TLjsHostHandlerKind = (lhhOutputRecord, lhhCanvasContext);
-  TLjsCapability = (lcDebugOutput, lcBrowserAlert, lcCanvasBasic);
+  TLjsHostHandlerKind = (lhhOutputRecord, lhhCanvasContext, lhhElementGet);
+  TLjsCapability = (lcDebugOutput, lcBrowserAlert, lcCanvasBasic, lcDomVisual);
   TLjsCapabilitySet = set of TLjsCapability;
 
   TLjsHostBinding = record
@@ -74,10 +74,11 @@ type
       lvHostObject: (HostObjectId: Integer);
   end;
 
-  TLjsHostObjectKind = (lhoCanvasContext);
+  TLjsHostObjectKind = (lhoCanvasContext, lhoElement);
 
   TLjsHostObject = record
     Kind: TLjsHostObjectKind;
+    Name: ShortString;
   end;
 
   TLjsVar = record
@@ -153,6 +154,8 @@ type
       const Args: array of TLjsValue): TLjsValue;
     function CallHostObjectMethod(const Target: TLjsValue; const AMethodName: string;
       const Args: array of TLjsValue): TLjsValue;
+    procedure SetHostObjectProperty(const Target: TLjsValue;
+      const PropertyName: string; const Value: TLjsValue);
     function EvalExpressionNode(const Expression: TLjsExpression; NodeIndex: Integer): TLjsValue;
     function EvalExpression(const Expression: TLjsExpression): TLjsValue;
     function CallFunction(const Name: string; const Args: array of TLjsValue): TLjsValue;
@@ -266,7 +269,7 @@ end;
 function DefaultLjsHostBindings: TLjsHostBindingArray;
 begin
   Result := nil;
-  SetLength(Result, 3);
+  SetLength(Result, 4);
   Result[0].ObjectName := 'Debug';
   Result[0].MethodName := 'log';
   Result[0].Capability := lcDebugOutput;
@@ -282,6 +285,11 @@ begin
   Result[2].Capability := lcCanvasBasic;
   Result[2].HandlerKind := lhhCanvasContext;
   Result[2].OutputPrefix := '';
+  Result[3].ObjectName := 'Document';
+  Result[3].MethodName := 'getElement';
+  Result[3].Capability := lcDomVisual;
+  Result[3].HandlerKind := lhhElementGet;
+  Result[3].OutputPrefix := '';
 end;
 
 function IsolatedLjsRuntimeProfile: TLjsRuntimeProfile;
@@ -497,6 +505,7 @@ begin
   N := Length(FHostObjects);
   SetLength(FHostObjects, N + 1);
   FHostObjects[N].Kind := Kind;
+  FHostObjects[N].Name := '';
   Result.Kind := lvHostObject;
   Result.HostObjectId := N;
 end;
@@ -560,10 +569,36 @@ begin
         RequireArgCount(Args, 0, Binding.FullName);
         ReturnValue := MakeHostObjectValue(lhoCanvasContext);
       end;
+    lhhElementGet:
+      begin
+        RequireArgCount(Args, 1, Binding.FullName);
+        if Args[0].Kind <> lvString then
+          raise Exception.CreateFmt('Script host method %s expects string id, got %s',
+            [Binding.FullName, ValueToString(Args[0])]);
+        ReturnValue := MakeHostObjectValue(lhoElement);
+        FHostObjects[ReturnValue.HostObjectId].Name := Args[0].StringValue;
+      end;
   else
     raise Exception.CreateFmt('Unsupported script host handler for capability %d',
       [Ord(Binding.Capability)]);
   end;
+end;
+
+procedure TLjsRuntime.SetHostObjectProperty(const Target: TLjsValue;
+  const PropertyName: string; const Value: TLjsValue);
+var
+  ObjectId: Integer;
+begin
+  ObjectId := RequireHostObject(Target, lhoElement, PropertyName);
+  if not (lcDomVisual in FCapabilities) then
+    raise Exception.CreateFmt('Unknown script host property: element.%s',
+      [PropertyName]);
+  if (PropertyName <> 'color') and (PropertyName <> 'background') and
+     (PropertyName <> 'border') and (PropertyName <> 'borderWidth') then
+    raise Exception.CreateFmt('Unknown script host property: element.%s',
+      [PropertyName]);
+  AppendOutput('DOM', MakeStringValue(Format('%s.%s = %s',
+    [string(FHostObjects[ObjectId].Name), PropertyName, ValueToString(Value)])));
 end;
 
 function TLjsRuntime.CallHostObjectMethod(const Target: TLjsValue;
@@ -762,6 +797,9 @@ begin
       DeclareVar(Node.Name, EvalExpression(Node.Expr));
     lskAssign:
       SetVar(Node.Name, EvalExpression(Node.Expr));
+    lskSetMember:
+      SetHostObjectProperty(GetVar(Node.Name), Node.MemberName,
+        EvalExpression(Node.Expr));
     lskCall:
       EvalExpression(Node.Expr);
     lskIf:

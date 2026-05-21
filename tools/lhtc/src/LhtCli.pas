@@ -697,6 +697,18 @@ begin
     'CANVAS: clear' + #10 + 'CANVAS: fillRect 1 2 30 40' + #10 +
     'CANVAS: strokeRect 3 4 50 60' + #10, Profile);
   Profile := DefaultLjsRuntimeProfile;
+  Profile.Capabilities := Profile.Capabilities + [lcDomVisual];
+  ExpectScriptOutputWithProfile('dom visual property sink',
+    'let el = Document.getElement("warning"); el.color = "#C00000"; el.background = "#FFFFCC"; el.border = "#336699"; el.borderWidth = 1;',
+    'DOM: warning.color = #C00000' + #10 +
+    'DOM: warning.background = #FFFFCC' + #10 +
+    'DOM: warning.border = #336699' + #10 +
+    'DOM: warning.borderWidth = 1' + #10, Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  ExpectScriptRuntimeProfileFail('dom visual capability not enabled',
+    'let el = Document.getElement("warning");',
+    'Unknown script host call', Profile);
+  Profile := DefaultLjsRuntimeProfile;
   ExpectScriptRuntimeProfileFail('canvas capability not enabled',
     'let ctx = Canvas.context();',
     'Unknown script host call', Profile);

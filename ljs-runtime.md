@@ -32,6 +32,11 @@ Canvas.context()
 ctx.clear()
 ctx.fillRect(x, y, w, h)
 ctx.strokeRect(x, y, w, h)
+Document.getElement(id)
+el.color = value
+el.background = value
+el.border = value
+el.borderWidth = value
 ```
 
 The runtime does not build these objects in directly. It only executes the
@@ -46,7 +51,9 @@ kinds are:
 - `output-record`, used by command-line tools to append deterministic records
   to a runtime output buffer;
 - `canvas-context`, which returns a drawing-only host object handle when the
-  `lcCanvasBasic` capability is enabled.
+  `lcCanvasBasic` capability is enabled;
+- `element-get`, which returns an element host object handle when the
+  `lcDomVisual` capability is enabled.
 
 Host method arity is checked by the selected handler. `Debug.log()` and
 `Browser.alert()` still accept one argument; canvas context methods use their
@@ -73,6 +80,9 @@ Implemented capability profiles:
   `Debug.log()` and `Browser.alert()` bound to output-record handlers.
 - test/browser profiles may enable `lcCanvasBasic`, registering
   `Canvas.context()` and returning a drawing-only context handle.
+- test/browser profiles may enable `lcDomVisual`, registering
+  `Document.getElement(id)` and allowing visual property writes on element
+  handles.
 
 A host binding is registered only when its capability is enabled by the active
 profile. This lets an embedding expose `Debug.log()` without also exposing
@@ -118,6 +128,22 @@ through expressions such as `let y = inc(4);`.
 Member calls are expression nodes too. Root host calls such as
 `Canvas.context()` are resolved through profile bindings; calls on host object
 handles such as `ctx.fillRect(1, 2, 30, 40)` dispatch through the handle kind.
+
+Member assignment is currently a narrow statement form for visual DOM-style
+properties on element handles:
+
+```js
+let el = Document.getElement("warning");
+el.color = "#C00000";
+el.background = "#FFFFCC";
+el.border = "#336699";
+el.borderWidth = 1;
+```
+
+This intentionally excludes `text` for now; changing text content has more
+layout and text-run consequences than color and border mutation. The current
+runtime records these writes in a deterministic fake DOM sink instead of
+mutating a real document tree.
 
 Function arity is intentionally permissive:
 
