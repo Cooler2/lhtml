@@ -5,7 +5,7 @@ unit LhtScriptRuntime;
 interface
 
 uses
-  LhtScript;
+  LhtDom, LhtScript;
 
 type
   TLjsHostHandlerKind = (lhhOutputRecord, lhhCanvasContext, lhhElementGet);
@@ -31,6 +31,7 @@ type
     StringLengthLimit: Integer;
     TokenCountLimit: Integer;
     HostBindings: TLjsHostBindingArray;
+    DomRoot: TNode;
   end;
 
 function DefaultLjsHostBindings: TLjsHostBindingArray;
@@ -79,6 +80,7 @@ type
   TLjsHostObject = record
     Kind: TLjsHostObjectKind;
     Name: ShortString;
+    Node: TNode;
   end;
 
   TLjsVar = record
@@ -124,6 +126,7 @@ type
     FStackSlotLimit: Integer;
     FStringLengthLimit: Integer;
     FCapabilities: TLjsCapabilitySet;
+    FDomRoot: TNode;
     FHostBindings: array of TLjsRuntimeHostBinding;
     FHostObjects: array of TLjsHostObject;
     function FindVar(const Name: string): Integer;
@@ -145,6 +148,7 @@ type
     function MakeHostObjectValue(Kind: TLjsHostObjectKind): TLjsValue;
     function RequireHostObject(const Value: TLjsValue;
       Kind: TLjsHostObjectKind; const OpName: string): Integer;
+    function FindElementById(Node: TNode; const Id: string): TNode;
     procedure RequireArgCount(const Args: array of TLjsValue; Count: Integer;
       const OpName: string);
     function FindHostCall(const FullName: string): Integer;
@@ -302,6 +306,7 @@ begin
   Result.OutputRecordLimit := LJS_DEFAULT_OUTPUT_RECORD_LIMIT;
   Result.StringLengthLimit := LJS_DEFAULT_STRING_LENGTH_LIMIT;
   Result.TokenCountLimit := LJS_DEFAULT_TOKEN_COUNT_LIMIT;
+  Result.DomRoot := nil;
 end;
 
 function CliDebugLjsRuntimeProfile: TLjsRuntimeProfile;
@@ -331,6 +336,7 @@ begin
   FStackSlotLimit := Profile.StackSlotLimit;
   FStringLengthLimit := Profile.StringLengthLimit;
   FCapabilities := Profile.Capabilities;
+  FDomRoot := Profile.DomRoot;
   SetLength(FScopes, 1);
   ChargeStackSlots(LJS_CALL_FRAME_SLOT_OVERHEAD);
 end;
@@ -506,6 +512,7 @@ begin
   SetLength(FHostObjects, N + 1);
   FHostObjects[N].Kind := Kind;
   FHostObjects[N].Name := '';
+  FHostObjects[N].Node := nil;
   Result.Kind := lvHostObject;
   Result.HostObjectId := N;
 end;
@@ -523,6 +530,23 @@ begin
     raise Exception.CreateFmt('Script host method %s got incompatible host object',
       [OpName]);
   Result := Value.HostObjectId;
+end;
+
+function TLjsRuntime.FindElementById(Node: TNode; const Id: string): TNode;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if Node = nil then
+    Exit;
+  if (Node.Kind = nkElement) and (Node.AttrValue('id', '') = Id) then
+    Exit(Node);
+  for I := 0 to High(Node.Children) do
+  begin
+    Result := FindElementById(Node.Children[I], Id);
+    if Result <> nil then
+      Exit;
+  end;
 end;
 
 procedure TLjsRuntime.RequireArgCount(const Args: array of TLjsValue;
@@ -556,6 +580,8 @@ end;
 
 procedure TLjsRuntime.ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
   const Args: array of TLjsValue; out ReturnValue: TLjsValue);
+var
+  Element: TNode;
 begin
   ReturnValue := NullValue;
   case Binding.HandlerKind of
@@ -575,8 +601,18 @@ begin
         if Args[0].Kind <> lvString then
           raise Exception.CreateFmt('Script host method %s expects string id, got %s',
             [Binding.FullName, ValueToString(Args[0])]);
+        if FDomRoot = nil then
+          raise Exception.CreateFmt('Script host method %s requires document root',
+            [Binding.FullName]);
+        Element := FindElementById(FDomRoot, string(Args[0].StringValue));
+        if Element = nil then
+        begin
+          ReturnValue := NullValue;
+          Exit;
+        end;
         ReturnValue := MakeHostObjectValue(lhoElement);
         FHostObjects[ReturnValue.HostObjectId].Name := Args[0].StringValue;
+        FHostObjects[ReturnValue.HostObjectId].Node := Element;
       end;
   else
     raise Exception.CreateFmt('Unsupported script host handler for capability %d',
@@ -597,6 +633,10 @@ begin
      (PropertyName <> 'border') and (PropertyName <> 'borderWidth') then
     raise Exception.CreateFmt('Unknown script host property: element.%s',
       [PropertyName]);
+  if FHostObjects[ObjectId].Node = nil then
+    raise Exception.CreateFmt('Script host property element.%s got stale element handle',
+      [PropertyName]);
+  FHostObjects[ObjectId].Node.SetAttr(PropertyName, ValueToString(Value));
   AppendOutput('DOM', MakeStringValue(Format('%s.%s = %s',
     [string(FHostObjects[ObjectId].Name), PropertyName, ValueToString(Value)])));
 end;

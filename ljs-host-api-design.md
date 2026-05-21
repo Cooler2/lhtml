@@ -416,11 +416,11 @@ order:
 2. Add runtime value support for host object handles. Started with
    `Canvas.context()` returning a drawing-only context handle.
 3. Add property assignment AST/runtime support. Started with visual writes on
-   element handles in the fake DOM sink.
+   element handles.
 4. Implement `getElement(id)` returning a weak element handle. Started as
    `Document.getElement(id)` in the mini runtime.
 5. Implement real document mutation for `color`, `background`, `border`, and
-   `borderWidth`.
+   `borderWidth`. Done for attached mini-DOM `TNode` roots.
 6. Later, implement `el.text` read/write for text-hosting elements and spans.
 7. Add event handler dispatch for `onClick`/`click`.
 8. Add `document.on("error", ...)` after the top-level error model is wired.

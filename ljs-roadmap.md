@@ -120,8 +120,10 @@ Implemented scope:
   object handle and `ctx.fillRect(...)` can dispatch through that handle;
 - `lcCanvasBasic` enables a first headless canvas drawing sink with `clear`,
   `fillRect`, and `strokeRect`;
-- `lcDomVisual` enables `Document.getElement(id)` and a first fake DOM visual
-  property sink for `color`, `background`, `border`, and `borderWidth`.
+- `lcDomVisual` enables `Document.getElement(id)` and visual property writes
+  for `color`, `background`, `border`, and `borderWidth`;
+- when a runtime profile carries a `DomRoot`, visual property writes mutate
+  real mini-DOM `TNode` attributes.
 
 Known limits:
 

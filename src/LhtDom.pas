@@ -23,6 +23,8 @@ type
     constructor CreateText(const AText: string);
     destructor Destroy; override;
     procedure AddAttr(const AName, AValue: string);
+    procedure SetAttr(const AName, AValue: string);
+    function AttrValue(const AName, Default: string): string;
     procedure AddChild(AChild: TNode);
     function TextContent: string;
   end;
@@ -60,6 +62,29 @@ begin
   SetLength(Attrs, N + 1);
   Attrs[N].Name := AName;
   Attrs[N].Value := AValue;
+end;
+
+procedure TNode.SetAttr(const AName, AValue: string);
+var
+  I: Integer;
+begin
+  for I := 0 to High(Attrs) do
+    if Attrs[I].Name = AName then
+    begin
+      Attrs[I].Value := AValue;
+      Exit;
+    end;
+  AddAttr(AName, AValue);
+end;
+
+function TNode.AttrValue(const AName, Default: string): string;
+var
+  I: Integer;
+begin
+  for I := 0 to High(Attrs) do
+    if Attrs[I].Name = AName then
+      Exit(Attrs[I].Value);
+  Result := Default;
 end;
 
 procedure TNode.AddChild(AChild: TNode);

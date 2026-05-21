@@ -151,20 +151,26 @@ begin
   end;
 end;
 
-procedure AppendScriptOutput(Node: TNode; var Output: string);
+procedure AppendScriptOutput(Root, Node: TNode; var Output: string);
 var
   I: Integer;
+  Profile: TLjsRuntimeProfile;
 begin
   if (Node.Kind = nkElement) and (Node.Name = 'script') then
-    Output := Output + ExecuteLjsScriptText(Node.TextContent);
+  begin
+    Profile := DefaultLjsRuntimeProfile;
+    Profile.Capabilities := Profile.Capabilities + [lcDomVisual];
+    Profile.DomRoot := Root;
+    Output := Output + ExecuteLjsScriptTextWithProfile(Node.TextContent, Profile);
+  end;
   for I := 0 to High(Node.Children) do
-    AppendScriptOutput(Node.Children[I], Output);
+    AppendScriptOutput(Root, Node.Children[I], Output);
 end;
 
 function ExecuteDocumentScripts(Root: TNode): string;
 begin
   Result := '';
-  AppendScriptOutput(Root, Result);
+  AppendScriptOutput(Root, Root, Result);
 end;
 
 procedure RunScript(const InputName: string);
@@ -651,6 +657,92 @@ begin
   end;
 end;
 
+procedure ExpectDomVisualMutation;
+var
+  Profile: TLjsRuntimeProfile;
+  Root, Body, Block: TNode;
+  Actual: string;
+begin
+  Root := TNode.CreateElement('lhtml');
+  try
+    Body := TNode.CreateElement('body');
+    Root.AddChild(Body);
+    Block := TNode.CreateElement('block');
+    Block.AddAttr('id', 'warning');
+    Body.AddChild(Block);
+
+    Profile := DefaultLjsRuntimeProfile;
+    Profile.Capabilities := Profile.Capabilities + [lcDomVisual];
+    Profile.DomRoot := Root;
+    Actual := ExecuteLjsScriptTextWithProfile(
+      'let el = Document.getElement("warning"); el.color = "#C00000"; el.background = "#FFFFCC"; el.border = "#336699"; el.borderWidth = 1;',
+      Profile);
+    if Actual <> 'DOM: warning.color = #C00000' + #10 +
+      'DOM: warning.background = #FFFFCC' + #10 +
+      'DOM: warning.border = #336699' + #10 +
+      'DOM: warning.borderWidth = 1' + #10 then
+      raise Exception.CreateFmt('script runtime case dom visual mutation output mismatch: got "%s"',
+        [Actual]);
+    if (Block.AttrValue('color', '') <> '#C00000') or
+       (Block.AttrValue('background', '') <> '#FFFFCC') or
+       (Block.AttrValue('border', '') <> '#336699') or
+       (Block.AttrValue('borderWidth', '') <> '1') then
+      raise Exception.Create('script runtime case dom visual mutation did not update node attrs');
+    WriteLn('OK script runtime dom visual mutation');
+  finally
+    Root.Free;
+  end;
+end;
+
+function FindNodeById(Node: TNode; const Id: string): TNode;
+var
+  I: Integer;
+begin
+  Result := nil;
+  if Node = nil then
+    Exit;
+  if (Node.Kind = nkElement) and (Node.AttrValue('id', '') = Id) then
+    Exit(Node);
+  for I := 0 to High(Node.Children) do
+  begin
+    Result := FindNodeById(Node.Children[I], Id);
+    if Result <> nil then
+      Exit;
+  end;
+end;
+
+procedure ExpectDocumentScriptDomMutation;
+var
+  Parser: TLhtParser;
+  Root, Block: TNode;
+  Output: string;
+begin
+  Parser := TLhtParser.Create(
+    '<lhtml><body><block id="warning">Warning</block></body>' +
+    '<script>let el = Document.getElement("warning"); el.color = "#C00000"; el.background = "#FFFFCC"; el.borderWidth = 1;</script></lhtml>');
+  Root := nil;
+  try
+    Root := Parser.Parse;
+    Output := ExecuteDocumentScripts(Root);
+    Block := FindNodeById(Root, 'warning');
+    if Block = nil then
+      raise Exception.Create('script runtime case document dom visual mutation lost test block');
+    if Output <> 'DOM: warning.color = #C00000' + #10 +
+      'DOM: warning.background = #FFFFCC' + #10 +
+      'DOM: warning.borderWidth = 1' + #10 then
+      raise Exception.CreateFmt('script runtime case document dom visual mutation output mismatch: got "%s"',
+        [Output]);
+    if (Block.AttrValue('color', '') <> '#C00000') or
+       (Block.AttrValue('background', '') <> '#FFFFCC') or
+       (Block.AttrValue('borderWidth', '') <> '1') then
+      raise Exception.Create('script runtime case document dom visual mutation did not update node attrs');
+    WriteLn('OK script runtime document dom visual mutation');
+  finally
+    Root.Free;
+    Parser.Free;
+  end;
+end;
+
 procedure RunCheckScriptRuntime;
 var
   Profile: TLjsRuntimeProfile;
@@ -696,14 +788,8 @@ begin
     'let ctx = Canvas.context(); ctx.clear(); ctx.fillRect(1, 2, 30, 40); ctx.strokeRect(3, 4, 50, 60);',
     'CANVAS: clear' + #10 + 'CANVAS: fillRect 1 2 30 40' + #10 +
     'CANVAS: strokeRect 3 4 50 60' + #10, Profile);
-  Profile := DefaultLjsRuntimeProfile;
-  Profile.Capabilities := Profile.Capabilities + [lcDomVisual];
-  ExpectScriptOutputWithProfile('dom visual property sink',
-    'let el = Document.getElement("warning"); el.color = "#C00000"; el.background = "#FFFFCC"; el.border = "#336699"; el.borderWidth = 1;',
-    'DOM: warning.color = #C00000' + #10 +
-    'DOM: warning.background = #FFFFCC' + #10 +
-    'DOM: warning.border = #336699' + #10 +
-    'DOM: warning.borderWidth = 1' + #10, Profile);
+  ExpectDomVisualMutation;
+  ExpectDocumentScriptDomMutation;
   Profile := DefaultLjsRuntimeProfile;
   ExpectScriptRuntimeProfileFail('dom visual capability not enabled',
     'let el = Document.getElement("warning");',

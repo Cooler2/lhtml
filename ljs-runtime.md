@@ -82,7 +82,8 @@ Implemented capability profiles:
   `Canvas.context()` and returning a drawing-only context handle.
 - test/browser profiles may enable `lcDomVisual`, registering
   `Document.getElement(id)` and allowing visual property writes on element
-  handles.
+  handles. When the profile carries a `DomRoot`, these writes mutate the
+  matching `TNode` attributes.
 
 A host binding is registered only when its capability is enabled by the active
 profile. This lets an embedding expose `Debug.log()` without also exposing
@@ -141,9 +142,9 @@ el.borderWidth = 1;
 ```
 
 This intentionally excludes `text` for now; changing text content has more
-layout and text-run consequences than color and border mutation. The current
-runtime records these writes in a deterministic fake DOM sink instead of
-mutating a real document tree.
+layout and text-run consequences than color and border mutation. The runtime
+updates the real mini-DOM node attributes when a document root is attached, and
+also records deterministic `DOM:` output lines for CLI regression tests.
 
 Function arity is intentionally permissive:
 
