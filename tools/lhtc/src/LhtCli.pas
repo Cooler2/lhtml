@@ -163,9 +163,7 @@ var
 begin
   if (Node.Kind = nkElement) and (Node.Name = 'script') then
   begin
-    Profile := DefaultLjsRuntimeProfile;
-    Profile.Capabilities := Profile.Capabilities + [lcDomVisual];
-    Profile.DomRoot := Root;
+    Profile := CliPageLjsRuntimeProfile(Root);
     Output := Output + ExecuteLjsScriptTextWithProfile(Node.TextContent, Profile);
   end;
   for I := 0 to High(Node.Children) do
@@ -666,7 +664,7 @@ end;
 procedure ExpectDomVisualMutation;
 var
   Profile: TLjsRuntimeProfile;
-  Root, Body, Block: TNode;
+  Root, Body, Block, EscapedBlock: TNode;
   Actual: string;
 begin
   Root := TNode.CreateElement('lhtml');
@@ -676,10 +674,11 @@ begin
     Block := TNode.CreateElement('block');
     Block.AddAttr('id', 'warning');
     Body.AddChild(Block);
+    EscapedBlock := TNode.CreateElement('block');
+    EscapedBlock.AddAttr('id', 'line' + #10 + 'break');
+    Body.AddChild(EscapedBlock);
 
-    Profile := DefaultLjsRuntimeProfile;
-    Profile.Capabilities := Profile.Capabilities + [lcDomVisual];
-    Profile.DomRoot := Root;
+    Profile := CliPageLjsRuntimeProfile(Root);
     Actual := ExecuteLjsScriptTextWithProfile(
       'let el = Document.getElement("warning"); el.color = "#C00000"; el.background = "#FFFFCC"; el.border = "#336699"; el.borderWidth = 1;',
       Profile);
@@ -694,6 +693,15 @@ begin
        (Block.AttrValue('border', '') <> '#336699') or
        (Block.AttrValue('borderWidth', '') <> '1') then
       raise Exception.Create('script runtime case dom visual mutation did not update node attrs');
+    Actual := ExecuteLjsScriptTextWithProfile(
+      'let el = Document.getElement("line\nbreak"); el.color = "#C00000";',
+      Profile);
+    if Actual <> 'DOM: line\nbreak.color = #C00000' + #10 then
+      raise Exception.CreateFmt('script runtime case dom visual escaped output mismatch: got "%s"',
+        [Actual]);
+    ExpectScriptRuntimeProfileFail('dom visual property validation',
+      'let el = Document.getElement("warning"); el.borderWidth = "wide";',
+      'Attribute borderWidth expects unsigned integer', Profile);
     WriteLn('OK script runtime dom visual mutation');
   finally
     Root.Free;
@@ -912,6 +920,16 @@ begin
   ExpectScriptRuntimeProfileFail('profile string concat limit',
     'Debug.log("abc" + "def");',
     'Script runtime string length limit exceeded', Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  Profile.StringLengthLimit := 300;
+  ExpectScriptOutputWithProfile('profile string value above shortstring',
+    'Debug.log("' + StringOfChar('a', 260) + '");',
+    'LOG: ' + StringOfChar('a', 260) + #10, Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  Profile.ExpressionDepthLimit := 1;
+  ExpectScriptRuntimeProfileFail('profile expression depth limit',
+    'Debug.log(1);',
+    'Script runtime expression depth limit exceeded', Profile);
   Profile := DefaultLjsRuntimeProfile;
   Profile.TokenCountLimit := 3;
   ExpectScriptRuntimeProfileFail('profile token count limit',

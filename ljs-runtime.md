@@ -99,6 +99,10 @@ lhtc render examples\script-visual-dom\index.lht tmp\script-visual-dom.bmp
 `runscript` executes all `<script>` sections in document order and writes the
 deterministic host-function output.
 
+Document script execution uses the `cli-page` runtime profile in the reference
+CLI. It starts from the CLI debug host set, grants `lcDomVisual`, and attaches
+the parsed mini-DOM root as `DomRoot`.
+
 `render` and `rendergdi` execute document scripts before rendering, so their
 BMP output is a settled post-script snapshot. A browser may still paint an
 initial frame before later post-body scripts run; that is an interactive
@@ -137,7 +141,10 @@ Member calls are expression nodes too. Root host calls such as
 handles such as `ctx.fillRect(1, 2, 30, 40)` dispatch through the handle kind.
 
 Member assignment is currently a narrow statement form for visual DOM-style
-properties on element handles:
+properties on element handles. The left-hand side must be a local variable plus
+a single property name; chained forms such as
+`Document.getElement("warning").color = "#C00000"` are intentionally outside
+this first slice.
 
 ```js
 let el = Document.getElement("warning");
@@ -184,8 +191,8 @@ Current and likely limits:
 - runtime step limit: `10000`;
 - runtime stack slot limit: `1000` slots;
 - runtime output record limit: `1000` records;
-- runtime string length limit: `255` bytes/chars in the current reference
-  implementation;
+- runtime string length limit: `255` bytes/chars by default;
+- runtime expression depth limit: `256` nested AST eval frames;
 - runtime token count limit: `4096` tokens;
 
 The preferred recursion/memory guard is a stack-size limit, not a plain call
@@ -210,9 +217,17 @@ String length accounting:
 
 - every runtime string value is checked against `StringLengthLimit`;
 - this applies to string literals and strings created by concatenation;
-- the current default is `255`, matching the temporary `ShortString` payload in
-  `TLjsValue`;
+- runtime string values use ordinary strings in the reference runtime; the
+  default limit remains a profile policy, not a storage-size side effect;
 - exceeding the limit raises `Script runtime string length limit exceeded`.
+
+Expression depth accounting:
+
+- every recursive expression-node evaluation is checked against
+  `ExpressionDepthLimit`;
+- this catches deeply nested expression ASTs separately from call-stack slot
+  accounting;
+- exceeding the limit raises `Script runtime expression depth limit exceeded`.
 
 Token count accounting:
 

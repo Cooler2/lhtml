@@ -29,6 +29,7 @@ type
     StackSlotLimit: Integer;
     OutputRecordLimit: Integer;
     StringLengthLimit: Integer;
+    ExpressionDepthLimit: Integer;
     TokenCountLimit: Integer;
     HostBindings: TLjsHostBindingArray;
     DomRoot: TNode;
@@ -37,6 +38,7 @@ type
 function DefaultLjsHostBindings: TLjsHostBindingArray;
 function DefaultLjsRuntimeProfile: TLjsRuntimeProfile;
 function CliDebugLjsRuntimeProfile: TLjsRuntimeProfile;
+function CliPageLjsRuntimeProfile(Root: TNode): TLjsRuntimeProfile;
 function IsolatedLjsRuntimeProfile: TLjsRuntimeProfile;
 function ExecuteLjsTokens(const Tokens: TLjsTokenArray): string;
 function ExecuteLjsTokensWithHosts(const Tokens: TLjsTokenArray;
@@ -52,13 +54,14 @@ function ExecuteLjsScriptTextWithProfile(const S: string;
 implementation
 
 uses
-  SysUtils, Math;
+  SysUtils, Math, LhtValidation;
 
 const
   LJS_DEFAULT_STEP_LIMIT = 10000;
   LJS_DEFAULT_STACK_SLOT_LIMIT = 1000;
   LJS_DEFAULT_OUTPUT_RECORD_LIMIT = 1000;
   LJS_DEFAULT_STRING_LENGTH_LIMIT = 255;
+  LJS_DEFAULT_EXPRESSION_DEPTH_LIMIT = 256;
   LJS_DEFAULT_TOKEN_COUNT_LIMIT = 4096;
   LJS_CALL_FRAME_SLOT_OVERHEAD = 1;
 
@@ -67,19 +70,17 @@ type
 
   TLjsValue = record
     Kind: TLjsValueKind;
-    case TLjsValueKind of
-      lvNull: ();
-      lvNumber: (NumberValue: Single);
-      lvString: (StringValue: ShortString);
-      lvBool: (BoolValue: Boolean);
-      lvHostObject: (HostObjectId: Integer);
+    NumberValue: Single;
+    StringValue: string;
+    BoolValue: Boolean;
+    HostObjectId: Integer;
   end;
 
   TLjsHostObjectKind = (lhoCanvasContext, lhoElement);
 
   TLjsHostObject = record
     Kind: TLjsHostObjectKind;
-    Name: ShortString;
+    Name: string;
     Node: TNode;
   end;
 
@@ -125,6 +126,7 @@ type
     FStackSlots: Integer;
     FStackSlotLimit: Integer;
     FStringLengthLimit: Integer;
+    FExpressionDepthLimit: Integer;
     FCapabilities: TLjsCapabilitySet;
     FDomRoot: TNode;
     FHostBindings: array of TLjsRuntimeHostBinding;
@@ -151,6 +153,7 @@ type
     function FindElementById(Node: TNode; const Id: string): TNode;
     procedure RequireArgCount(const Args: array of TLjsValue; Count: Integer;
       const OpName: string);
+    function EscapeOutputValue(const S: string): string;
     function FindHostCall(const FullName: string): Integer;
     procedure ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
       const Args: array of TLjsValue; out ReturnValue: TLjsValue);
@@ -160,7 +163,8 @@ type
       const Args: array of TLjsValue): TLjsValue;
     procedure SetHostObjectProperty(const Target: TLjsValue;
       const PropertyName: string; const Value: TLjsValue);
-    function EvalExpressionNode(const Expression: TLjsExpression; NodeIndex: Integer): TLjsValue;
+    function EvalExpressionNode(const Expression: TLjsExpression;
+      NodeIndex, Depth: Integer): TLjsValue;
     function EvalExpression(const Expression: TLjsExpression): TLjsValue;
     function CallFunction(const Name: string; const Args: array of TLjsValue): TLjsValue;
     procedure ExecNode(NodeIndex: Integer);
@@ -305,6 +309,7 @@ begin
   Result.StackSlotLimit := LJS_DEFAULT_STACK_SLOT_LIMIT;
   Result.OutputRecordLimit := LJS_DEFAULT_OUTPUT_RECORD_LIMIT;
   Result.StringLengthLimit := LJS_DEFAULT_STRING_LENGTH_LIMIT;
+  Result.ExpressionDepthLimit := LJS_DEFAULT_EXPRESSION_DEPTH_LIMIT;
   Result.TokenCountLimit := LJS_DEFAULT_TOKEN_COUNT_LIMIT;
   Result.DomRoot := nil;
 end;
@@ -322,6 +327,14 @@ begin
   Result := CliDebugLjsRuntimeProfile;
 end;
 
+function CliPageLjsRuntimeProfile(Root: TNode): TLjsRuntimeProfile;
+begin
+  Result := CliDebugLjsRuntimeProfile;
+  Result.Name := 'cli-page';
+  Result.Capabilities := Result.Capabilities + [lcDomVisual];
+  Result.DomRoot := Root;
+end;
+
 constructor TLjsRuntime.Create(const Tokens: TLjsTokenArray;
   const Profile: TLjsRuntimeProfile);
 begin
@@ -335,6 +348,7 @@ begin
   FStackSlots := 0;
   FStackSlotLimit := Profile.StackSlotLimit;
   FStringLengthLimit := Profile.StringLengthLimit;
+  FExpressionDepthLimit := Profile.ExpressionDepthLimit;
   FCapabilities := Profile.Capabilities;
   FDomRoot := Profile.DomRoot;
   SetLength(FScopes, 1);
@@ -551,10 +565,34 @@ end;
 
 procedure TLjsRuntime.RequireArgCount(const Args: array of TLjsValue;
   Count: Integer; const OpName: string);
+var
+  ArgLabel: string;
 begin
   if Length(Args) <> Count then
-    raise Exception.CreateFmt('Script host method %s expects %d argument(s), got %d',
-      [OpName, Count, Length(Args)]);
+  begin
+    if Count = 1 then
+      ArgLabel := 'argument'
+    else
+      ArgLabel := 'arguments';
+    raise Exception.CreateFmt('Script host method %s expects %d %s, got %d',
+      [OpName, Count, ArgLabel, Length(Args)]);
+  end;
+end;
+
+function TLjsRuntime.EscapeOutputValue(const S: string): string;
+var
+  I: Integer;
+begin
+  Result := '';
+  for I := 1 to Length(S) do
+    case S[I] of
+      '\': Result := Result + '\\';
+      #10: Result := Result + '\n';
+      #13: Result := Result + '\r';
+      #9: Result := Result + '\t';
+    else
+      Result := Result + S[I];
+    end;
 end;
 
 function TLjsRuntime.FindHostCall(const FullName: string): Integer;
@@ -604,7 +642,7 @@ begin
         if FDomRoot = nil then
           raise Exception.CreateFmt('Script host method %s requires document root',
             [Binding.FullName]);
-        Element := FindElementById(FDomRoot, string(Args[0].StringValue));
+        Element := FindElementById(FDomRoot, Args[0].StringValue);
         if Element = nil then
         begin
           ReturnValue := NullValue;
@@ -636,9 +674,11 @@ begin
   if FHostObjects[ObjectId].Node = nil then
     raise Exception.CreateFmt('Script host property element.%s got stale element handle',
       [PropertyName]);
+  ValidateMiniAttributeValue(PropertyName, ValueToString(Value));
   FHostObjects[ObjectId].Node.SetAttr(PropertyName, ValueToString(Value));
   AppendOutput('DOM', MakeStringValue(Format('%s.%s = %s',
-    [string(FHostObjects[ObjectId].Name), PropertyName, ValueToString(Value)])));
+    [EscapeOutputValue(FHostObjects[ObjectId].Name), PropertyName,
+     EscapeOutputValue(ValueToString(Value))])));
 end;
 
 function TLjsRuntime.CallHostObjectMethod(const Target: TLjsValue;
@@ -676,7 +716,7 @@ begin
 end;
 
 function TLjsRuntime.EvalExpressionNode(const Expression: TLjsExpression;
-  NodeIndex: Integer): TLjsValue;
+  NodeIndex, Depth: Integer): TLjsValue;
 var
   I: Integer;
   FS: TFormatSettings;
@@ -686,6 +726,9 @@ var
   Args: array of TLjsValue;
   TargetName: string;
 begin
+  if Depth > FExpressionDepthLimit then
+    raise Exception.CreateFmt('Script runtime expression depth limit exceeded: %d > %d',
+      [Depth, FExpressionDepthLimit]);
   if (NodeIndex < 0) or (NodeIndex > High(Expression.Nodes)) then
     raise Exception.Create('Invalid script expression node');
 
@@ -722,7 +765,7 @@ begin
         [LjsTokenDebugName(Token)]);
     SetLength(Args, Length(Node.Args));
     for I := 0 to High(Node.Args) do
-      Args[I] := EvalExpressionNode(Expression, Node.Args[I]);
+      Args[I] := EvalExpressionNode(Expression, Node.Args[I], Depth + 1);
     Result := CallFunction(Token.Value, Args);
     Exit;
   end;
@@ -731,7 +774,7 @@ begin
   begin
     SetLength(Args, Length(Node.Args));
     for I := 0 to High(Node.Args) do
-      Args[I] := EvalExpressionNode(Expression, Node.Args[I]);
+      Args[I] := EvalExpressionNode(Expression, Node.Args[I], Depth + 1);
     if (Node.Left >= 0) and
        (Expression.Nodes[Node.Left].Kind = lenToken) and
        (FTokens[Expression.Nodes[Node.Left].TokenIndex].Kind = ljsIdentifier) then
@@ -749,13 +792,13 @@ begin
       end;
     end;
 
-    Left := EvalExpressionNode(Expression, Node.Left);
+    Left := EvalExpressionNode(Expression, Node.Left, Depth + 1);
     Result := CallHostObjectMethod(Left, Node.Name, Args);
     Exit;
   end;
 
-  Left := EvalExpressionNode(Expression, Node.Left);
-  Right := EvalExpressionNode(Expression, Node.Right);
+  Left := EvalExpressionNode(Expression, Node.Left, Depth + 1);
+  Right := EvalExpressionNode(Expression, Node.Right, Depth + 1);
   if TokenIsDict(Token, 'op:*') then
     Result := NumberValue(RequireNumber(Left, '*') * RequireNumber(Right, '*'))
   else if TokenIsDict(Token, 'op:/') then
@@ -788,7 +831,7 @@ end;
 
 function TLjsRuntime.EvalExpression(const Expression: TLjsExpression): TLjsValue;
 begin
-  Result := EvalExpressionNode(Expression, Expression.Root);
+  Result := EvalExpressionNode(Expression, Expression.Root, 1);
 end;
 
 function TLjsRuntime.CallFunction(const Name: string;

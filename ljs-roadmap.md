@@ -123,7 +123,9 @@ Implemented scope:
 - `lcDomVisual` enables `Document.getElement(id)` and visual property writes
   for `color`, `background`, `border`, and `borderWidth`;
 - when a runtime profile carries a `DomRoot`, visual property writes mutate
-  real mini-DOM `TNode` attributes.
+  real mini-DOM `TNode` attributes;
+- visual property writes reuse mini-attribute value validation before mutating
+  the node.
 - `lhtc render` and `lhtc rendergdi` execute document scripts before painting,
   producing a settled post-script snapshot for CLI use.
 
@@ -132,8 +134,7 @@ Known limits:
 - this slice was originally written before function call scopes; Slice 5 adds
   local function scopes on top;
 - the original token-range statement scanner was removed by Slice 6;
-- no DOM bridge;
-- strings still use a temporary `ShortString` payload in `TLjsValue`.
+- no general DOM bridge beyond the current visual property handle.
 
 ## Slice 4: Structural Script Blocks
 
@@ -246,7 +247,6 @@ Remaining priority items:
 
 Deferred deliberately:
 
-- `ShortString` value payloads;
 - `SetLength(..., N + 1)` growth style;
 - exception-based `return`;
 - linear variable/function lookup before AST and lexical-addressing work.
@@ -265,6 +265,9 @@ Host API naming:
   one-argument `Debug.log(value)` compatible with multi-argument canvas calls.
 - the first property-assignment support is intentionally visual-only; `text`
   mutation is deferred until text-run and reflow behavior is pinned down.
+- first-slice member assignment requires `localVariable.property = expr`;
+  chained assignment targets are deferred until the expression grammar needs
+  them.
 
 ## Slice 6: Script AST and Node Interpreter
 
@@ -326,9 +329,14 @@ Implemented scope:
 - `OutputRecordLimit = 1000` is enforced for host output records;
 - `StringLengthLimit = 255` is enforced for string literals and concatenation
   results;
+- string values are stored as ordinary strings; `StringLengthLimit` is the
+  runtime policy limit rather than a `ShortString` storage ceiling;
+- `ExpressionDepthLimit = 256` guards deeply nested expression AST evaluation;
 - `TokenCountLimit = 4096` is enforced before AST construction;
 - `CliDebugLjsRuntimeProfile` includes the CLI host bindings, while
   `IsolatedLjsRuntimeProfile` exposes no host objects;
+- `CliPageLjsRuntimeProfile` adds document visual capability and a `DomRoot`
+  for document-script execution in `runscript`, `render`, and `rendergdi`;
 - host bindings carry a handler kind; implemented handlers append output
   records for CLI tests, create a drawing-only canvas context handle, or create
   an element handle for visual property writes;
@@ -343,6 +351,12 @@ Still planned:
 
 - decide whether host calls consume any stack budget once richer host APIs
   exist.
+- add an explicit `HostObjectLimit` before raising `StepLimit` or introducing
+  long-lived host handles;
+- dispatch host-object methods by `TLjsHostObjectKind` before adding the first
+  element method;
+- decide whether nested `function` declarations should be specified as global
+  hoisting or rejected in nested statement positions.
 
 Out of scope for this slice:
 
