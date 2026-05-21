@@ -21,6 +21,7 @@ type
     StackSlotLimit: Integer;
     OutputRecordLimit: Integer;
     StringLengthLimit: Integer;
+    TokenCountLimit: Integer;
     HostBindings: TLjsHostBindingArray;
   end;
 
@@ -48,6 +49,7 @@ const
   LJS_DEFAULT_STACK_SLOT_LIMIT = 1000;
   LJS_DEFAULT_OUTPUT_RECORD_LIMIT = 1000;
   LJS_DEFAULT_STRING_LENGTH_LIMIT = 255;
+  LJS_DEFAULT_TOKEN_COUNT_LIMIT = 4096;
   LJS_CALL_FRAME_SLOT_OVERHEAD = 1;
 
 type
@@ -245,6 +247,7 @@ begin
   Result.StackSlotLimit := LJS_DEFAULT_STACK_SLOT_LIMIT;
   Result.OutputRecordLimit := LJS_DEFAULT_OUTPUT_RECORD_LIMIT;
   Result.StringLengthLimit := LJS_DEFAULT_STRING_LENGTH_LIMIT;
+  Result.TokenCountLimit := LJS_DEFAULT_TOKEN_COUNT_LIMIT;
 end;
 
 function DefaultLjsRuntimeProfile: TLjsRuntimeProfile;
@@ -651,6 +654,10 @@ var
   I: Integer;
   Runtime: TLjsRuntime;
 begin
+  if Length(Tokens) > Profile.TokenCountLimit then
+    raise Exception.CreateFmt('Script runtime token count limit exceeded: %d > %d',
+      [Length(Tokens), Profile.TokenCountLimit]);
+
   Runtime := TLjsRuntime.Create(Tokens, Profile);
   try
     for I := 0 to High(Profile.HostBindings) do

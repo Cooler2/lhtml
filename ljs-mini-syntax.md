@@ -83,10 +83,11 @@ Runtime limits:
 - `maxStackSlots = 1000` in the current reference runtime;
 - `maxOutputRecords = 1000` in the current reference runtime;
 - `maxStringLength = 255` in the current reference runtime;
+- `maxTokens = 4096` in the current reference runtime;
 - stack slots account for parameters, local variables, and a small per-call
   frame overhead;
-- step, stack-slot, output-record, and string-length limits are runtime profile
-  settings.
+- step, stack-slot, output-record, string-length, and token-count limits are
+  runtime profile settings.
 
 ## Whitespace And Comments
 

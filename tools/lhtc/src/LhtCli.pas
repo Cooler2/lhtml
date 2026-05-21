@@ -718,6 +718,11 @@ begin
   ExpectScriptRuntimeProfileFail('profile string concat limit',
     'Debug.log("abc" + "def");',
     'Script runtime string length limit exceeded', Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  Profile.TokenCountLimit := 3;
+  ExpectScriptRuntimeProfileFail('profile token count limit',
+    'let x = 1;',
+    'Script runtime token count limit exceeded', Profile);
 end;
 
 procedure RunLhtC;

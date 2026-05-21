@@ -307,6 +307,7 @@ Implemented scope:
 - `OutputRecordLimit = 1000` is enforced for host output records;
 - `StringLengthLimit = 255` is enforced for string literals and concatenation
   results;
+- `TokenCountLimit = 4096` is enforced before AST construction;
 - `DefaultLjsRuntimeProfile` includes the CLI host bindings, while
   `IsolatedLjsRuntimeProfile` exposes no host objects;
 - every scope charges one frame-overhead slot;
@@ -318,8 +319,7 @@ Implemented scope:
 Still planned:
 
 - decide whether host calls consume any stack budget once richer host APIs
-  exist;
-- add a maximum token count limit.
+  exist.
 
 Out of scope for this slice:
 

@@ -122,7 +122,7 @@ Current and likely limits:
 - runtime output record limit: `1000` records;
 - runtime string length limit: `255` bytes/chars in the current reference
   implementation;
-- maximum token count;
+- runtime token count limit: `4096` tokens;
 
 The preferred recursion/memory guard is a stack-size limit, not a plain call
 depth limit. A slot is a runtime accounting unit for parameter bindings, local
@@ -149,6 +149,12 @@ String length accounting:
 - the current default is `255`, matching the temporary `ShortString` payload in
   `TLjsValue`;
 - exceeding the limit raises `Script runtime string length limit exceeded`.
+
+Token count accounting:
+
+- the runtime checks `TokenCountLimit` before building the AST;
+- this rejects oversized SCRIPT streams before statement parsing or execution;
+- exceeding the limit raises `Script runtime token count limit exceeded`.
 
 Current stack-slot accounting:
 
