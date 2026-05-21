@@ -124,6 +124,8 @@ Implemented scope:
   for `color`, `background`, `border`, and `borderWidth`;
 - when a runtime profile carries a `DomRoot`, visual property writes mutate
   real mini-DOM `TNode` attributes.
+- `lhtc render` and `lhtc rendergdi` execute document scripts before painting,
+  producing a settled post-script snapshot for CLI use.
 
 Known limits:
 

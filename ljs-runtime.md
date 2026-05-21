@@ -93,10 +93,16 @@ CLI integration:
 
 ```text
 lhtc runscript examples\script-basic\index.lht
+lhtc render examples\script-visual-dom\index.lht tmp\script-visual-dom.bmp
 ```
 
-The command executes all `<script>` sections in document order and writes the
+`runscript` executes all `<script>` sections in document order and writes the
 deterministic host-function output.
+
+`render` and `rendergdi` execute document scripts before rendering, so their
+BMP output is a settled post-script snapshot. A browser may still paint an
+initial frame before later post-body scripts run; that is an interactive
+browser lifecycle concern rather than the CLI renderer contract.
 
 Runtime output fixtures use `LF` line endings so the buffer is stable across
 platforms.

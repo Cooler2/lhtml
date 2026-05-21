@@ -41,8 +41,8 @@ begin
   WriteLn('  bintokendump Decode mini binary and print token stream');
   WriteLn('  bindump  Disassemble mini binary byte stream');
   WriteLn('  bindumpfile Disassemble mini binary: lhtc bindumpfile <input.lhb> <output.dump>');
-  WriteLn('  render   Render mini DOM to BMP: lhtc render <input.lht> <output.bmp>');
-  WriteLn('  rendergdi Render mini DOM through GDI: lhtc rendergdi <input.lht> <output.bmp>');
+  WriteLn('  render   Execute scripts, then render mini DOM to BMP: lhtc render <input.lht> <output.bmp>');
+  WriteLn('  rendergdi Execute scripts, then render mini DOM through GDI: lhtc rendergdi <input.lht> <output.bmp>');
   WriteLn('  runscript Execute document <script> sections: lhtc runscript <input.lht>');
   WriteLn('  dictdump Print current mini dictionaries as markdown');
   WriteLn('  dictdumpfile Write current mini dictionaries: lhtc dictdumpfile <output.md>');
@@ -63,6 +63,8 @@ begin
     Parser.Free;
   end;
 end;
+
+function ExecuteDocumentScripts(Root: TNode): string; forward;
 
 procedure RunReadCommand(const Command, FileName: string);
 var
@@ -108,6 +110,7 @@ var
 begin
   Root := ParseFile(InputName);
   try
+    ExecuteDocumentScripts(Root);
     RenderMiniToBmp(Root, OutputName);
   finally
     Root.Free;
@@ -121,6 +124,7 @@ var
 begin
   Root := ParseFile(InputName);
   try
+    ExecuteDocumentScripts(Root);
     RenderMiniToGdiBmp(Root, OutputName);
   finally
     Root.Free;
