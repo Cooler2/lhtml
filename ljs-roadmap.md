@@ -94,7 +94,8 @@ Scope:
 - comparisons;
 - `if` / `else`;
 - `while`;
-- host calls through registered object-method bindings.
+- host calls through registered object-method bindings;
+- first host object handles for narrow capability objects.
 
 The first interpreter must not require DOM integration. In CLI tools,
 `cli-debug` host bindings for `Debug.log()` and `Browser.alert()` can write to
@@ -114,7 +115,11 @@ Implemented scope:
 - `Debug` and `Browser` are registered by the `cli-debug` runtime profile, not
   runtime builtins;
 - host bindings now dispatch through handler kinds instead of name-specific
-  runtime branches.
+  runtime branches;
+- member calls are expression nodes, so `Canvas.context()` can return a host
+  object handle and `ctx.fillRect(...)` can dispatch through that handle;
+- `lcCanvasBasic` enables a first headless canvas drawing sink with `clear`,
+  `fillRect`, and `strokeRect`.
 
 Known limits:
 
@@ -250,6 +255,8 @@ Host API naming:
 - the profile also carries the reference runtime limits;
 - host bindings are gated by profile capabilities, so a profile can expose one
   binding without exposing every known host object.
+- host method arity belongs to the handler, not the parser; this keeps
+  one-argument `Debug.log(value)` compatible with multi-argument canvas calls.
 
 ## Slice 6: Script AST and Node Interpreter
 
@@ -314,8 +321,8 @@ Implemented scope:
 - `TokenCountLimit = 4096` is enforced before AST construction;
 - `CliDebugLjsRuntimeProfile` includes the CLI host bindings, while
   `IsolatedLjsRuntimeProfile` exposes no host objects;
-- host bindings carry a handler kind; the current handler appends output
-  records for CLI tests;
+- host bindings carry a handler kind; implemented handlers append output
+  records for CLI tests or create a drawing-only canvas context handle;
 - profile capabilities gate which host bindings are registered;
 - every scope charges one frame-overhead slot;
 - every `let` variable and function parameter binding charges one slot;

@@ -559,9 +559,6 @@ begin
   ExpectParseFail('script bad call',
     '<lhtml><script>Debug.log(;);</script><body></body></lhtml>',
     'Unexpected script punctuation in expression');
-  ExpectParseFail('script host object extra argument',
-    '<lhtml><script>Debug.log(1, 2);</script><body></body></lhtml>',
-    'Script host object call expects exactly one argument');
   ExpectParseFail('script bare host alias rejected',
     '<lhtml><script>log(1);</script><body></body></lhtml>',
     'Expected "=" in assignment');
@@ -673,6 +670,12 @@ begin
   ExpectScriptOutput('host object calls',
     'Debug.log("debug"); Browser.alert("browser");',
     'LOG: debug' + #10 + 'ALERT: browser' + #10);
+  ExpectScriptRuntimeFail('host object extra argument',
+    'Debug.log(1, 2);',
+    'expects 1 argument');
+  ExpectScriptRuntimeFail('host root shadowed by variable',
+    'let Debug = 1; Debug.log(1);',
+    'expects host object');
   Profile := CliDebugLjsRuntimeProfile;
   Profile.Capabilities := [lcDebugOutput];
   ExpectScriptOutputWithProfile('host capability enabled',
@@ -687,6 +690,16 @@ begin
   ExpectScriptRuntimeNoHostsFail('host object not registered',
     'Debug.log("debug");',
     'Unknown script host call');
+  Profile := DefaultLjsRuntimeProfile;
+  Profile.Capabilities := Profile.Capabilities + [lcCanvasBasic];
+  ExpectScriptOutputWithProfile('canvas basic drawing sink',
+    'let ctx = Canvas.context(); ctx.clear(); ctx.fillRect(1, 2, 30, 40); ctx.strokeRect(3, 4, 50, 60);',
+    'CANVAS: clear' + #10 + 'CANVAS: fillRect 1 2 30 40' + #10 +
+    'CANVAS: strokeRect 3 4 50 60' + #10, Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  ExpectScriptRuntimeProfileFail('canvas capability not enabled',
+    'let ctx = Canvas.context();',
+    'Unknown script host call', Profile);
   ExpectScriptOutput('parenthesized precedence',
     'Debug.log((2 + 3) * 4);',
     'LOG: 20' + #10);

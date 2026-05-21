@@ -29,11 +29,13 @@ document marks the adopted direction explicitly.
 Define the stable author-facing contract for browser host APIs before wiring a
 real DOM bridge into the current mini runtime.
 
-The current implemented mini runtime only supports namespaced one-argument host
-calls such as `Debug.log(value)`. The full browser host API needs more runtime
-features: property access, host object values, callbacks, function references,
-multiple arguments, and event-loop integration. This document describes the
-target contract those slices should converge toward.
+The current implemented mini runtime supports namespaced member calls,
+handler-checked argument lists, and first host object handles. The first
+implemented handle is a drawing-only canvas context returned by
+`Canvas.context()` under `lcCanvasBasic`. The full browser host API still needs
+more runtime features: property access, callbacks, function references,
+structured host objects, and event-loop integration. This document describes
+the target contract those slices should converge toward.
 
 ## Authority Model
 
@@ -405,8 +407,9 @@ when safe.
 The current mini runtime is much smaller than this target. Good implementation
 order:
 
-1. Preserve current `cli-debug` host handler path as the test profile.
-2. Add runtime value support for host object handles.
+1. Preserve current `cli-debug` host handler path as the test profile. Done.
+2. Add runtime value support for host object handles. Started with
+   `Canvas.context()` returning a drawing-only context handle.
 3. Add property access AST/runtime support.
 4. Implement `getElement(id)` returning a weak element handle.
 5. Implement `el.text` read/write for text-hosting elements and spans.

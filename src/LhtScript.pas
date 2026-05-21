@@ -6,7 +6,7 @@ interface
 
 type
   TLjsTokenKind = (ljsDict, ljsIdentifier, ljsString, ljsNumber);
-  TLjsExprNodeKind = (lenToken, lenBinary, lenCall);
+  TLjsExprNodeKind = (lenToken, lenBinary, lenCall, lenMemberCall);
   TLjsStatementKind = (lskLet, lskAssign, lskCall, lskIf, lskWhile,
     lskFunction, lskReturn);
 
@@ -21,6 +21,7 @@ type
   TLjsExprNode = record
     Kind: TLjsExprNodeKind;
     TokenIndex: Integer;
+    Name: string;
     Left: Integer;
     Right: Integer;
     Args: array of Integer;
@@ -71,6 +72,9 @@ type
     function IsDict(Index: Integer; const Name: string): Boolean;
     function AddNode(Kind: TLjsExprNodeKind; TokenIndex, Left, Right: Integer): Integer;
     function AddCallNode(TokenIndex: Integer; const Args: array of Integer): Integer;
+    function AddMemberCallNode(TargetIndex, MethodTokenIndex: Integer;
+      const Args: array of Integer): Integer;
+    procedure ParseCallArgs(var Args: TLjsStatementList);
     function ParseExpression: Integer;
     function ParseEquality: Integer;
     function ParseComparison: Integer;
@@ -343,6 +347,7 @@ begin
   SetLength(FExpression.Nodes, Result + 1);
   FExpression.Nodes[Result].Kind := Kind;
   FExpression.Nodes[Result].TokenIndex := TokenIndex;
+  FExpression.Nodes[Result].Name := '';
   FExpression.Nodes[Result].Left := Left;
   FExpression.Nodes[Result].Right := Right;
   SetLength(FExpression.Nodes[Result].Args, 0);
@@ -359,9 +364,83 @@ begin
     FExpression.Nodes[Result].Args[I] := Args[I];
 end;
 
+function TLjsExprParser.AddMemberCallNode(TargetIndex,
+  MethodTokenIndex: Integer; const Args: array of Integer): Integer;
+var
+  I: Integer;
+begin
+  Result := AddNode(lenMemberCall, MethodTokenIndex, TargetIndex, -1);
+  FExpression.Nodes[Result].Name := FTokens[MethodTokenIndex].Value;
+  SetLength(FExpression.Nodes[Result].Args, Length(Args));
+  for I := 0 to High(Args) do
+    FExpression.Nodes[Result].Args[I] := Args[I];
+end;
+
+procedure TLjsExprParser.ParseCallArgs(var Args: TLjsStatementList);
+var
+  Arg, ArgStart, ArgEnd, DelimIndex, Depth, OldEnd: Integer;
+begin
+  SetLength(Args, 0);
+  if not IsDict(FIndex, 'punct:(') then
+    raise Exception.CreateFmt('Expected "(" after script call target, got %s',
+      [TokenLabel(FTokens, FIndex)]);
+  Inc(FIndex);
+
+  if not IsDict(FIndex, 'punct:)') then
+  begin
+    while True do
+    begin
+      ArgStart := FIndex;
+      Depth := 0;
+      DelimIndex := FIndex;
+      while DelimIndex <= FEndIndex do
+      begin
+        if IsDict(DelimIndex, 'punct:(') then
+          Inc(Depth)
+        else if IsDict(DelimIndex, 'punct:)') then
+        begin
+          if Depth = 0 then
+            Break;
+          Dec(Depth);
+        end;
+        if (Depth = 0) and IsDict(DelimIndex, 'punct:,') then
+          Break;
+        Inc(DelimIndex);
+      end;
+      if DelimIndex > FEndIndex then
+        raise Exception.CreateFmt('Expected ")" after script call expression, got %s',
+          [TokenLabel(FTokens, DelimIndex)]);
+      ArgEnd := DelimIndex - 1;
+      if ArgStart > ArgEnd then
+        raise Exception.Create('Expected script call argument expression');
+      OldEnd := FEndIndex;
+      FEndIndex := ArgEnd;
+      Arg := ParseExpression;
+      if FIndex <= FEndIndex then
+        raise Exception.CreateFmt('Unexpected trailing script expression token: %s',
+          [TokenLabel(FTokens, FIndex)]);
+      FEndIndex := OldEnd;
+      FIndex := DelimIndex;
+      SetLength(Args, Length(Args) + 1);
+      Args[High(Args)] := Arg;
+      if IsDict(FIndex, 'punct:,') then
+      begin
+        Inc(FIndex);
+        Continue;
+      end;
+      Break;
+    end;
+  end;
+
+  if not IsDict(FIndex, 'punct:)') then
+    raise Exception.CreateFmt('Expected ")" after script call expression, got %s',
+      [TokenLabel(FTokens, FIndex)]);
+  Inc(FIndex);
+end;
+
 function TLjsExprParser.ParsePrimary: Integer;
 var
-  OpenIndex, Arg, ArgStart, ArgEnd, DelimIndex, Depth, OldEnd: Integer;
+  OpenIndex, MethodIndex: Integer;
   Args: array of Integer;
 begin
   if FIndex > FEndIndex then
@@ -374,57 +453,7 @@ begin
     Inc(FIndex);
     if (FTokens[OpenIndex].Kind = ljsIdentifier) and IsDict(FIndex, 'punct:(') then
     begin
-      Inc(FIndex);
-      SetLength(Args, 0);
-      if not IsDict(FIndex, 'punct:)') then
-      begin
-        while True do
-        begin
-          ArgStart := FIndex;
-          Depth := 0;
-          DelimIndex := FIndex;
-          while DelimIndex <= FEndIndex do
-          begin
-            if IsDict(DelimIndex, 'punct:(') then
-              Inc(Depth)
-            else if IsDict(DelimIndex, 'punct:)') then
-            begin
-              if Depth = 0 then
-                Break;
-              Dec(Depth);
-            end
-            else if (Depth = 0) and IsDict(DelimIndex, 'punct:,') then
-              Break;
-            Inc(DelimIndex);
-          end;
-          if DelimIndex > FEndIndex then
-            raise Exception.CreateFmt('Expected ")" after script call expression, got %s',
-              [TokenLabel(FTokens, DelimIndex)]);
-          ArgEnd := DelimIndex - 1;
-          if ArgStart > ArgEnd then
-            raise Exception.Create('Expected script call argument expression');
-          OldEnd := FEndIndex;
-          FEndIndex := ArgEnd;
-          Arg := ParseExpression;
-          if FIndex <= FEndIndex then
-            raise Exception.CreateFmt('Unexpected trailing script expression token: %s',
-              [TokenLabel(FTokens, FIndex)]);
-          FEndIndex := OldEnd;
-          FIndex := DelimIndex;
-          SetLength(Args, Length(Args) + 1);
-          Args[High(Args)] := Arg;
-          if IsDict(FIndex, 'punct:,') then
-          begin
-            Inc(FIndex);
-            Continue;
-          end;
-          Break;
-        end;
-      end;
-      if not IsDict(FIndex, 'punct:)') then
-        raise Exception.CreateFmt('Expected ")" after script call expression, got %s',
-          [TokenLabel(FTokens, FIndex)]);
-      Inc(FIndex);
+      ParseCallArgs(Args);
       Result := AddCallNode(OpenIndex, Args);
     end;
   end
@@ -441,6 +470,18 @@ begin
   else
     raise Exception.CreateFmt('Unexpected script token in expression: %s',
       [TokenLabel(FTokens, FIndex)]);
+
+  while IsDict(FIndex, 'punct:.') do
+  begin
+    Inc(FIndex);
+    if (FIndex > FEndIndex) or (FTokens[FIndex].Kind <> ljsIdentifier) then
+      raise Exception.CreateFmt('Expected script member method identifier, got %s',
+        [TokenLabel(FTokens, FIndex)]);
+    MethodIndex := FIndex;
+    Inc(FIndex);
+    ParseCallArgs(Args);
+    Result := AddMemberCallNode(Result, MethodIndex, Args);
+  end;
 end;
 
 function TLjsExprParser.ParseFactor: Integer;
@@ -573,6 +614,9 @@ begin
       else if (P = ',') and (ParenDepth > 0) then
       begin
       end
+      else if P = '.' then
+      begin
+      end
       else
         raise Exception.CreateFmt('Unexpected script punctuation in expression: %s',
           [TokenLabel(Tokens, I)]);
@@ -668,25 +712,9 @@ begin
 end;
 
 function TLjsStatementParser.ParseHostObjectCall: Integer;
-var
-  ObjectName, HostMethod: string;
 begin
   Result := AddNode(lskCall, FIndex);
-  ObjectName := FTokens[FIndex].Value;
-  Inc(FIndex);
-  ExpectToken(FTokens, FIndex, 'punct:.', 'Expected "." in host object call');
-  if (FIndex <= High(FTokens)) and (FTokens[FIndex].Kind = ljsIdentifier) then
-    HostMethod := FTokens[FIndex].Value
-  else
-    raise Exception.CreateFmt('Expected host method identifier, got %s',
-      [TokenLabel(FTokens, FIndex)]);
-  FAst.Nodes[Result].Name := ObjectName + '.' + HostMethod;
-  Inc(FIndex);
-  ExpectToken(FTokens, FIndex, 'punct:(', 'Expected "(" after host object call');
-  FAst.Nodes[Result].Expr := ParseExpressionUntil(',)');
-  if IsDict(FIndex, 'punct:,') then
-    raise Exception.Create('Script host object call expects exactly one argument');
-  ExpectToken(FTokens, FIndex, 'punct:)', 'Expected ")" after host object call argument');
+  FAst.Nodes[Result].Expr := ParseExpressionUntil(';');
   ExpectToken(FTokens, FIndex, 'punct:;', 'Expected ";" after host object call');
 end;
 

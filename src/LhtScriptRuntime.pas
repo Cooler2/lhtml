@@ -8,8 +8,8 @@ uses
   LhtScript;
 
 type
-  TLjsHostHandlerKind = (lhhOutputRecord);
-  TLjsCapability = (lcDebugOutput, lcBrowserAlert);
+  TLjsHostHandlerKind = (lhhOutputRecord, lhhCanvasContext);
+  TLjsCapability = (lcDebugOutput, lcBrowserAlert, lcCanvasBasic);
   TLjsCapabilitySet = set of TLjsCapability;
 
   TLjsHostBinding = record
@@ -62,7 +62,7 @@ const
   LJS_CALL_FRAME_SLOT_OVERHEAD = 1;
 
 type
-  TLjsValueKind = (lvNull, lvNumber, lvString, lvBool);
+  TLjsValueKind = (lvNull, lvNumber, lvString, lvBool, lvHostObject);
 
   TLjsValue = record
     Kind: TLjsValueKind;
@@ -71,6 +71,13 @@ type
       lvNumber: (NumberValue: Single);
       lvString: (StringValue: ShortString);
       lvBool: (BoolValue: Boolean);
+      lvHostObject: (HostObjectId: Integer);
+  end;
+
+  TLjsHostObjectKind = (lhoCanvasContext);
+
+  TLjsHostObject = record
+    Kind: TLjsHostObjectKind;
   end;
 
   TLjsVar = record
@@ -115,7 +122,9 @@ type
     FStackSlots: Integer;
     FStackSlotLimit: Integer;
     FStringLengthLimit: Integer;
+    FCapabilities: TLjsCapabilitySet;
     FHostBindings: array of TLjsRuntimeHostBinding;
+    FHostObjects: array of TLjsHostObject;
     function FindVar(const Name: string): Integer;
     function FindVarInScope(ScopeIndex: Integer; const Name: string): Integer;
     function GetVar(const Name: string): TLjsValue;
@@ -132,10 +141,18 @@ type
     procedure Step;
     procedure AppendOutput(const Prefix: string; const Value: TLjsValue);
     function MakeStringValue(const Value: string): TLjsValue;
+    function MakeHostObjectValue(Kind: TLjsHostObjectKind): TLjsValue;
+    function RequireHostObject(const Value: TLjsValue;
+      Kind: TLjsHostObjectKind; const OpName: string): Integer;
+    procedure RequireArgCount(const Args: array of TLjsValue; Count: Integer;
+      const OpName: string);
     function FindHostCall(const FullName: string): Integer;
     procedure ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
-      const Value: TLjsValue);
-    procedure CallHost(const FullName: string; const Value: TLjsValue);
+      const Args: array of TLjsValue; out ReturnValue: TLjsValue);
+    function CallRootHost(const FullName: string;
+      const Args: array of TLjsValue): TLjsValue;
+    function CallHostObjectMethod(const Target: TLjsValue; const AMethodName: string;
+      const Args: array of TLjsValue): TLjsValue;
     function EvalExpressionNode(const Expression: TLjsExpression; NodeIndex: Integer): TLjsValue;
     function EvalExpression(const Expression: TLjsExpression): TLjsValue;
     function CallFunction(const Name: string; const Args: array of TLjsValue): TLjsValue;
@@ -203,6 +220,8 @@ begin
         Result := 'true'
       else
         Result := 'false';
+    lvHostObject:
+      Result := '[host object]';
   else
     Result := '';
   end;
@@ -215,6 +234,7 @@ begin
     lvNumber: Result := Value.NumberValue <> 0;
     lvString: Result := Value.StringValue <> '';
     lvBool: Result := Value.BoolValue;
+    lvHostObject: Result := True;
   else
     Result := False;
   end;
@@ -229,6 +249,7 @@ begin
     lvNumber: Result := SameValue(A.NumberValue, B.NumberValue);
     lvString: Result := A.StringValue = B.StringValue;
     lvBool: Result := A.BoolValue = B.BoolValue;
+    lvHostObject: Result := A.HostObjectId = B.HostObjectId;
   else
     Result := False;
   end;
@@ -245,7 +266,7 @@ end;
 function DefaultLjsHostBindings: TLjsHostBindingArray;
 begin
   Result := nil;
-  SetLength(Result, 2);
+  SetLength(Result, 3);
   Result[0].ObjectName := 'Debug';
   Result[0].MethodName := 'log';
   Result[0].Capability := lcDebugOutput;
@@ -256,6 +277,11 @@ begin
   Result[1].Capability := lcBrowserAlert;
   Result[1].HandlerKind := lhhOutputRecord;
   Result[1].OutputPrefix := 'ALERT';
+  Result[2].ObjectName := 'Canvas';
+  Result[2].MethodName := 'context';
+  Result[2].Capability := lcCanvasBasic;
+  Result[2].HandlerKind := lhhCanvasContext;
+  Result[2].OutputPrefix := '';
 end;
 
 function IsolatedLjsRuntimeProfile: TLjsRuntimeProfile;
@@ -296,6 +322,7 @@ begin
   FStackSlots := 0;
   FStackSlotLimit := Profile.StackSlotLimit;
   FStringLengthLimit := Profile.StringLengthLimit;
+  FCapabilities := Profile.Capabilities;
   SetLength(FScopes, 1);
   ChargeStackSlots(LJS_CALL_FRAME_SLOT_OVERHEAD);
 end;
@@ -463,6 +490,40 @@ begin
   Result.StringValue := Value;
 end;
 
+function TLjsRuntime.MakeHostObjectValue(Kind: TLjsHostObjectKind): TLjsValue;
+var
+  N: Integer;
+begin
+  N := Length(FHostObjects);
+  SetLength(FHostObjects, N + 1);
+  FHostObjects[N].Kind := Kind;
+  Result.Kind := lvHostObject;
+  Result.HostObjectId := N;
+end;
+
+function TLjsRuntime.RequireHostObject(const Value: TLjsValue;
+  Kind: TLjsHostObjectKind; const OpName: string): Integer;
+begin
+  if Value.Kind <> lvHostObject then
+    raise Exception.CreateFmt('Script host method %s expects host object, got %s',
+      [OpName, ValueToString(Value)]);
+  if (Value.HostObjectId < 0) or (Value.HostObjectId > High(FHostObjects)) then
+    raise Exception.CreateFmt('Script host method %s got invalid host object',
+      [OpName]);
+  if FHostObjects[Value.HostObjectId].Kind <> Kind then
+    raise Exception.CreateFmt('Script host method %s got incompatible host object',
+      [OpName]);
+  Result := Value.HostObjectId;
+end;
+
+procedure TLjsRuntime.RequireArgCount(const Args: array of TLjsValue;
+  Count: Integer; const OpName: string);
+begin
+  if Length(Args) <> Count then
+    raise Exception.CreateFmt('Script host method %s expects %d argument(s), got %d',
+      [OpName, Count, Length(Args)]);
+end;
+
 function TLjsRuntime.FindHostCall(const FullName: string): Integer;
 var
   I: Integer;
@@ -473,26 +534,70 @@ begin
   Result := -1;
 end;
 
-procedure TLjsRuntime.CallHost(const FullName: string; const Value: TLjsValue);
+function TLjsRuntime.CallRootHost(const FullName: string;
+  const Args: array of TLjsValue): TLjsValue;
 var
   BindingIndex: Integer;
 begin
   BindingIndex := FindHostCall(FullName);
   if BindingIndex < 0 then
     raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
-  ExecuteHostBinding(FHostBindings[BindingIndex], Value);
+  ExecuteHostBinding(FHostBindings[BindingIndex], Args, Result);
 end;
 
 procedure TLjsRuntime.ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
-  const Value: TLjsValue);
+  const Args: array of TLjsValue; out ReturnValue: TLjsValue);
 begin
+  ReturnValue := NullValue;
   case Binding.HandlerKind of
     lhhOutputRecord:
-      AppendOutput(Binding.OutputPrefix, Value);
+      begin
+        RequireArgCount(Args, 1, Binding.FullName);
+        AppendOutput(Binding.OutputPrefix, Args[0]);
+      end;
+    lhhCanvasContext:
+      begin
+        RequireArgCount(Args, 0, Binding.FullName);
+        ReturnValue := MakeHostObjectValue(lhoCanvasContext);
+      end;
   else
     raise Exception.CreateFmt('Unsupported script host handler for capability %d',
       [Ord(Binding.Capability)]);
   end;
+end;
+
+function TLjsRuntime.CallHostObjectMethod(const Target: TLjsValue;
+  const AMethodName: string; const Args: array of TLjsValue): TLjsValue;
+var
+  FullName: string;
+begin
+  RequireHostObject(Target, lhoCanvasContext, AMethodName);
+  FullName := 'canvas.' + AMethodName;
+  if not (lcCanvasBasic in FCapabilities) then
+    raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
+
+  Result := NullValue;
+  if AMethodName = 'clear' then
+  begin
+    RequireArgCount(Args, 0, FullName);
+    AppendOutput('CANVAS', MakeStringValue('clear'));
+  end
+  else if AMethodName = 'fillRect' then
+  begin
+    RequireArgCount(Args, 4, FullName);
+    AppendOutput('CANVAS', MakeStringValue(Format('fillRect %s %s %s %s',
+      [ValueToString(Args[0]), ValueToString(Args[1]),
+       ValueToString(Args[2]), ValueToString(Args[3])])));
+  end
+  else if AMethodName = 'strokeRect' then
+  begin
+    RequireArgCount(Args, 4, FullName);
+    AppendOutput('CANVAS', MakeStringValue(Format('strokeRect %s %s %s %s',
+      [ValueToString(Args[0]), ValueToString(Args[1]),
+       ValueToString(Args[2]), ValueToString(Args[3])])));
+  end
+  else
+    raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
 end;
 
 function TLjsRuntime.EvalExpressionNode(const Expression: TLjsExpression;
@@ -504,6 +609,7 @@ var
   Token: TLjsToken;
   Left, Right: TLjsValue;
   Args: array of TLjsValue;
+  TargetName: string;
 begin
   if (NodeIndex < 0) or (NodeIndex > High(Expression.Nodes)) then
     raise Exception.Create('Invalid script expression node');
@@ -543,6 +649,33 @@ begin
     for I := 0 to High(Node.Args) do
       Args[I] := EvalExpressionNode(Expression, Node.Args[I]);
     Result := CallFunction(Token.Value, Args);
+    Exit;
+  end;
+
+  if Node.Kind = lenMemberCall then
+  begin
+    SetLength(Args, Length(Node.Args));
+    for I := 0 to High(Node.Args) do
+      Args[I] := EvalExpressionNode(Expression, Node.Args[I]);
+    if (Node.Left >= 0) and
+       (Expression.Nodes[Node.Left].Kind = lenToken) and
+       (FTokens[Expression.Nodes[Node.Left].TokenIndex].Kind = ljsIdentifier) then
+    begin
+      TargetName := FTokens[Expression.Nodes[Node.Left].TokenIndex].Value;
+      if FindVar(TargetName) < 0 then
+      begin
+        if FindHostCall(TargetName + '.' + Node.Name) >= 0 then
+        begin
+          Result := CallRootHost(TargetName + '.' + Node.Name, Args);
+          Exit;
+        end;
+        raise Exception.CreateFmt('Unknown script host call: %s.%s',
+          [TargetName, Node.Name]);
+      end;
+    end;
+
+    Left := EvalExpressionNode(Expression, Node.Left);
+    Result := CallHostObjectMethod(Left, Node.Name, Args);
     Exit;
   end;
 
@@ -620,7 +753,7 @@ end;
 procedure TLjsRuntime.ExecNode(NodeIndex: Integer);
 var
   Node: TLjsStatementNode;
-  Value, CondValue: TLjsValue;
+  CondValue: TLjsValue;
 begin
   Step;
   Node := FAst.Nodes[NodeIndex];
@@ -630,10 +763,7 @@ begin
     lskAssign:
       SetVar(Node.Name, EvalExpression(Node.Expr));
     lskCall:
-      begin
-        Value := EvalExpression(Node.Expr);
-        CallHost(Node.Name, Value);
-      end;
+      EvalExpression(Node.Expr);
     lskIf:
       begin
         CondValue := EvalExpression(Node.Expr);

@@ -18,7 +18,8 @@ The initial runtime supports:
 - `if` / `else`;
 - `while`;
 - first-slice user functions with parameters and `return`;
-- namespaced host calls through registered host objects.
+- namespaced root host calls through registered host objects;
+- first host object handles for narrow capability objects.
 
 ## Host Functions
 
@@ -27,17 +28,29 @@ Current CLI host bindings:
 ```text
 Debug.log(value)
 Browser.alert(value)
+Canvas.context()
+ctx.clear()
+ctx.fillRect(x, y, w, h)
+ctx.strokeRect(x, y, w, h)
 ```
 
 The runtime does not build these objects in directly. It only executes the
-`Object.method(value)` AST shape and resolves it through the active runtime
+`object.method(args...)` AST shape and resolves it through the active runtime
 profile. The `cli-debug` profile registers `Debug.log` and `Browser.alert`;
 the `isolated` profile registers no host objects.
 
 Host bindings are not interpreted by name after lookup. Each binding carries a
-handler kind plus handler-specific configuration. The current implemented
-handler kind is `output-record`, used by command-line tools to append
-deterministic records to a runtime output buffer.
+handler kind plus handler-specific configuration. The implemented handler
+kinds are:
+
+- `output-record`, used by command-line tools to append deterministic records
+  to a runtime output buffer;
+- `canvas-context`, which returns a drawing-only host object handle when the
+  `lcCanvasBasic` capability is enabled.
+
+Host method arity is checked by the selected handler. `Debug.log()` and
+`Browser.alert()` still accept one argument; canvas context methods use their
+own arity.
 
 Example output:
 
@@ -58,6 +71,8 @@ Implemented capability profiles:
 - `isolated`: no host capabilities and no host objects;
 - `cli-debug`: debug-output and browser-alert capabilities, with
   `Debug.log()` and `Browser.alert()` bound to output-record handlers.
+- test/browser profiles may enable `lcCanvasBasic`, registering
+  `Canvas.context()` and returning a drawing-only context handle.
 
 A host binding is registered only when its capability is enabled by the active
 profile. This lets an embedding expose `Debug.log()` without also exposing
@@ -99,6 +114,10 @@ Parenthesized expressions override precedence.
 
 User function calls are expression nodes, so values can be assigned or passed
 through expressions such as `let y = inc(4);`.
+
+Member calls are expression nodes too. Root host calls such as
+`Canvas.context()` are resolved through profile bindings; calls on host object
+handles such as `ctx.fillRect(1, 2, 30, 40)` dispatch through the handle kind.
 
 Function arity is intentionally permissive:
 
