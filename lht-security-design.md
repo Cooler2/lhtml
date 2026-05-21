@@ -355,6 +355,12 @@ Chart.loadTheme(func(url, cb) {
 
 This follows a capability model: libraries can do only what they are explicitly handed.
 
+Runtime script profiles should follow the same rule. A profile is an authority
+boundary: `isolated` exposes no host objects, while a debugging or browser
+profile may enable narrow capabilities such as debug output or browser alerts.
+Host object names are not language builtins; they are bindings selected by the
+active profile.
+
 ---
 
 ## 10. Recommended normative wording

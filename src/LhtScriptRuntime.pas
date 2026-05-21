@@ -8,15 +8,23 @@ uses
   LhtScript;
 
 type
+  TLjsHostHandlerKind = (lhhOutputRecord);
+  TLjsCapability = (lcDebugOutput, lcBrowserAlert);
+  TLjsCapabilitySet = set of TLjsCapability;
+
   TLjsHostBinding = record
     ObjectName: string;
     MethodName: string;
+    Capability: TLjsCapability;
+    HandlerKind: TLjsHostHandlerKind;
     OutputPrefix: string;
   end;
 
   TLjsHostBindingArray = array of TLjsHostBinding;
 
   TLjsRuntimeProfile = record
+    Name: string;
+    Capabilities: TLjsCapabilitySet;
     StepLimit: Integer;
     StackSlotLimit: Integer;
     OutputRecordLimit: Integer;
@@ -27,6 +35,7 @@ type
 
 function DefaultLjsHostBindings: TLjsHostBindingArray;
 function DefaultLjsRuntimeProfile: TLjsRuntimeProfile;
+function CliDebugLjsRuntimeProfile: TLjsRuntimeProfile;
 function IsolatedLjsRuntimeProfile: TLjsRuntimeProfile;
 function ExecuteLjsTokens(const Tokens: TLjsTokenArray): string;
 function ExecuteLjsTokensWithHosts(const Tokens: TLjsTokenArray;
@@ -81,6 +90,8 @@ type
 
   TLjsRuntimeHostBinding = record
     FullName: string;
+    Capability: TLjsCapability;
+    HandlerKind: TLjsHostHandlerKind;
     OutputPrefix: string;
   end;
 
@@ -122,6 +133,8 @@ type
     procedure AppendOutput(const Prefix: string; const Value: TLjsValue);
     function MakeStringValue(const Value: string): TLjsValue;
     function FindHostCall(const FullName: string): Integer;
+    procedure ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
+      const Value: TLjsValue);
     procedure CallHost(const FullName: string; const Value: TLjsValue);
     function EvalExpressionNode(const Expression: TLjsExpression; NodeIndex: Integer): TLjsValue;
     function EvalExpression(const Expression: TLjsExpression): TLjsValue;
@@ -132,7 +145,8 @@ type
     constructor Create(const Tokens: TLjsTokenArray;
       const Profile: TLjsRuntimeProfile);
     procedure RegisterHostCall(const ObjectName, HostMethodName,
-      OutputPrefix: string);
+      OutputPrefix: string; Capability: TLjsCapability;
+      HandlerKind: TLjsHostHandlerKind);
     function Run: string;
   end;
 
@@ -234,14 +248,20 @@ begin
   SetLength(Result, 2);
   Result[0].ObjectName := 'Debug';
   Result[0].MethodName := 'log';
+  Result[0].Capability := lcDebugOutput;
+  Result[0].HandlerKind := lhhOutputRecord;
   Result[0].OutputPrefix := 'LOG';
   Result[1].ObjectName := 'Browser';
   Result[1].MethodName := 'alert';
+  Result[1].Capability := lcBrowserAlert;
+  Result[1].HandlerKind := lhhOutputRecord;
   Result[1].OutputPrefix := 'ALERT';
 end;
 
 function IsolatedLjsRuntimeProfile: TLjsRuntimeProfile;
 begin
+  Result.Name := 'isolated';
+  Result.Capabilities := [];
   Result.HostBindings := nil;
   Result.StepLimit := LJS_DEFAULT_STEP_LIMIT;
   Result.StackSlotLimit := LJS_DEFAULT_STACK_SLOT_LIMIT;
@@ -250,10 +270,17 @@ begin
   Result.TokenCountLimit := LJS_DEFAULT_TOKEN_COUNT_LIMIT;
 end;
 
-function DefaultLjsRuntimeProfile: TLjsRuntimeProfile;
+function CliDebugLjsRuntimeProfile: TLjsRuntimeProfile;
 begin
   Result := IsolatedLjsRuntimeProfile;
+  Result.Name := 'cli-debug';
+  Result.Capabilities := [lcDebugOutput, lcBrowserAlert];
   Result.HostBindings := DefaultLjsHostBindings;
+end;
+
+function DefaultLjsRuntimeProfile: TLjsRuntimeProfile;
+begin
+  Result := CliDebugLjsRuntimeProfile;
 end;
 
 constructor TLjsRuntime.Create(const Tokens: TLjsTokenArray;
@@ -453,7 +480,19 @@ begin
   BindingIndex := FindHostCall(FullName);
   if BindingIndex < 0 then
     raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
-  AppendOutput(FHostBindings[BindingIndex].OutputPrefix, Value);
+  ExecuteHostBinding(FHostBindings[BindingIndex], Value);
+end;
+
+procedure TLjsRuntime.ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
+  const Value: TLjsValue);
+begin
+  case Binding.HandlerKind of
+    lhhOutputRecord:
+      AppendOutput(Binding.OutputPrefix, Value);
+  else
+    raise Exception.CreateFmt('Unsupported script host handler for capability %d',
+      [Ord(Binding.Capability)]);
+  end;
 end;
 
 function TLjsRuntime.EvalExpressionNode(const Expression: TLjsExpression;
@@ -636,7 +675,8 @@ begin
 end;
 
 procedure TLjsRuntime.RegisterHostCall(const ObjectName, HostMethodName,
-  OutputPrefix: string);
+  OutputPrefix: string; Capability: TLjsCapability;
+  HandlerKind: TLjsHostHandlerKind);
 var
   N: Integer;
 begin
@@ -645,6 +685,8 @@ begin
   N := Length(FHostBindings);
   SetLength(FHostBindings, N + 1);
   FHostBindings[N].FullName := ObjectName + '.' + HostMethodName;
+  FHostBindings[N].Capability := Capability;
+  FHostBindings[N].HandlerKind := HandlerKind;
   FHostBindings[N].OutputPrefix := OutputPrefix;
 end;
 
@@ -661,8 +703,10 @@ begin
   Runtime := TLjsRuntime.Create(Tokens, Profile);
   try
     for I := 0 to High(Profile.HostBindings) do
-      Runtime.RegisterHostCall(Profile.HostBindings[I].ObjectName,
-        Profile.HostBindings[I].MethodName, Profile.HostBindings[I].OutputPrefix);
+      if Profile.HostBindings[I].Capability in Profile.Capabilities then
+        Runtime.RegisterHostCall(Profile.HostBindings[I].ObjectName,
+          Profile.HostBindings[I].MethodName, Profile.HostBindings[I].OutputPrefix,
+          Profile.HostBindings[I].Capability, Profile.HostBindings[I].HandlerKind);
     Result := Runtime.Run;
   finally
     Runtime.Free;
@@ -676,6 +720,7 @@ var
 begin
   Profile := IsolatedLjsRuntimeProfile;
   Profile.HostBindings := Hosts;
+  Profile.Capabilities := [lcDebugOutput, lcBrowserAlert];
   Result := ExecuteLjsTokensWithProfile(Tokens, Profile);
 end;
 

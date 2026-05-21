@@ -31,11 +31,13 @@ Browser.alert(value)
 
 The runtime does not build these objects in directly. It only executes the
 `Object.method(value)` AST shape and resolves it through the active runtime
-profile. The default CLI profile registers `Debug.log` and `Browser.alert`;
-the isolated profile registers no host objects.
+profile. The `cli-debug` profile registers `Debug.log` and `Browser.alert`;
+the `isolated` profile registers no host objects.
 
-For command-line tools, the default host calls append deterministic records to
-a runtime output buffer.
+Host bindings are not interpreted by name after lookup. Each binding carries a
+handler kind plus handler-specific configuration. The current implemented
+handler kind is `output-record`, used by command-line tools to append
+deterministic records to a runtime output buffer.
 
 Example output:
 
@@ -50,6 +52,16 @@ This lets tests verify execution without any DOM bridge.
 
 The namespaced form leaves `Math.log(value)` free for logarithms and keeps host
 objects as runtime-profile authority rather than language builtins.
+
+Implemented capability profiles:
+
+- `isolated`: no host capabilities and no host objects;
+- `cli-debug`: debug-output and browser-alert capabilities, with
+  `Debug.log()` and `Browser.alert()` bound to output-record handlers.
+
+A host binding is registered only when its capability is enabled by the active
+profile. This lets an embedding expose `Debug.log()` without also exposing
+`Browser.alert()`.
 
 CLI integration:
 
@@ -129,9 +141,9 @@ depth limit. A slot is a runtime accounting unit for parameter bindings, local
 `let` variables, and a small per-call frame overhead. This catches both deep
 recursion with tiny frames and shallower recursion with many locals.
 
-Runtime limits are profile data in the reference runtime. The default CLI
-profile and isolated profile currently share the same limits; they differ in
-host bindings.
+Runtime limits are profile data in the reference runtime. The `cli-debug` and
+`isolated` profiles currently share the same limits; they differ in enabled
+capabilities and host bindings.
 
 Host output accounting:
 

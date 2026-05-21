@@ -590,6 +590,18 @@ begin
   WriteLn('OK script runtime ', Name);
 end;
 
+procedure ExpectScriptOutputWithProfile(const Name, Source, Expected: string;
+  const Profile: TLjsRuntimeProfile);
+var
+  Actual: string;
+begin
+  Actual := ExecuteLjsScriptTextWithProfile(Source, Profile);
+  if Actual <> Expected then
+    raise Exception.CreateFmt('script runtime case %s output mismatch: got "%s"',
+      [Name, Actual]);
+  WriteLn('OK script runtime ', Name);
+end;
+
 procedure ExpectScriptRuntimeFail(const Name, Source, MessagePart: string);
 begin
   try
@@ -661,6 +673,14 @@ begin
   ExpectScriptOutput('host object calls',
     'Debug.log("debug"); Browser.alert("browser");',
     'LOG: debug' + #10 + 'ALERT: browser' + #10);
+  Profile := CliDebugLjsRuntimeProfile;
+  Profile.Capabilities := [lcDebugOutput];
+  ExpectScriptOutputWithProfile('host capability enabled',
+    'Debug.log("debug");',
+    'LOG: debug' + #10, Profile);
+  ExpectScriptRuntimeProfileFail('host capability not enabled',
+    'Browser.alert("browser");',
+    'Unknown script host call', Profile);
   ExpectScriptRuntimeFail('unknown host object call',
     'Debug.alert("bad");',
     'Unknown script host call');

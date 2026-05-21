@@ -96,9 +96,9 @@ Scope:
 - `while`;
 - host calls through registered object-method bindings.
 
-The first interpreter must not require DOM integration. In CLI tools, default
-host bindings for `Debug.log()` and `Browser.alert()` can write to a
-deterministic output buffer.
+The first interpreter must not require DOM integration. In CLI tools,
+`cli-debug` host bindings for `Debug.log()` and `Browser.alert()` can write to
+a deterministic output buffer.
 
 Implemented scope:
 
@@ -111,8 +111,10 @@ Implemented scope:
   concatenation, unknown variables, and duplicate `let` declarations;
 - runtime expression evaluation consumes the same expression AST parser as
   validation;
-- `Debug` and `Browser` are registered by the default CLI runtime profile, not
-  runtime builtins.
+- `Debug` and `Browser` are registered by the `cli-debug` runtime profile, not
+  runtime builtins;
+- host bindings now dispatch through handler kinds instead of name-specific
+  runtime branches.
 
 Known limits:
 
@@ -245,7 +247,9 @@ Host API naming:
 - this leaves `Math.log(value)` available for logarithms;
 - concrete host objects are registered by the active runtime profile rather
   than hard-coded into the interpreter;
-- the profile also carries the reference runtime limits.
+- the profile also carries the reference runtime limits;
+- host bindings are gated by profile capabilities, so a profile can expose one
+  binding without exposing every known host object.
 
 ## Slice 6: Script AST and Node Interpreter
 
@@ -308,8 +312,11 @@ Implemented scope:
 - `StringLengthLimit = 255` is enforced for string literals and concatenation
   results;
 - `TokenCountLimit = 4096` is enforced before AST construction;
-- `DefaultLjsRuntimeProfile` includes the CLI host bindings, while
+- `CliDebugLjsRuntimeProfile` includes the CLI host bindings, while
   `IsolatedLjsRuntimeProfile` exposes no host objects;
+- host bindings carry a handler kind; the current handler appends output
+  records for CLI tests;
+- profile capabilities gate which host bindings are registered;
 - every scope charges one frame-overhead slot;
 - every `let` variable and function parameter binding charges one slot;
 - function scope slots are released when the function returns or unwinds;

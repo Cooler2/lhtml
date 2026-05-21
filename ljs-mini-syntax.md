@@ -62,12 +62,18 @@ Debug.log(value);
 Browser.alert(value);
 ```
 
-In the first CLI slice, these names are default host bindings. They are not
+In the first CLI slice, these names are `cli-debug` host bindings. They are not
 language builtins: the active runtime profile registers the host object and
 method names it wants to expose. Host calls accept exactly one argument.
 
 The namespaced shape keeps `Math.log()` available for logarithms and prepares
 the grammar for later host object calls.
+
+Current profiles:
+
+- `isolated`: no host object calls are available;
+- `cli-debug`: `Debug.log(value)` and `Browser.alert(value)` are available as
+  output-record handlers.
 
 Function call arity is permissive:
 
