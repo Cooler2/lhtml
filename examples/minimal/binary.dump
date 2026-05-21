@@ -1,0 +1,75 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 0B 4D 69 6E 69 6D 61 6C 20 4C 48 54  INLINE_VALUE text "Minimal LHT"
+0024  00                  END
+0025  08                  element:meta
+0026  21                  attr:name
+0027  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+0035  22                  attr:content
+0036  03 84 20 53 6D 61 6C 6C 20 70 61 72 73 65 72 20 61 6E 64 20 72 6F 75 6E 64 2D 74 72 69 70 20 74 65 73 74  INLINE_VALUE string "Small parser and round-trip test"
+0059  00                  END
+005A  02 04               COMMAND BODY_BEGIN
+005C  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+0060  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+0064  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+0068  01                  START
+0069  05                  element:body
+006A  01                  START
+006B  06                  element:block
+006C  23                  attr:id
+006D  03 84 05 69 6E 74 72 6F  INLINE_VALUE string "intro"
+0075  03 85 15 4D 69 6E 69 6D 61 6C 20 4C 48 54 20 64 6F 63 75 6D 65 6E 74 2E  INLINE_VALUE text "Minimal LHT document."
+008D  09                  command:p
+008E  03 85 25 49 74 20 68 61 73 20 74 65 78 74 2C 20 61 20 70 61 72 61 67 72 61 70 68 20 62 72 65 61 6B 2C 20 61 6E 64 20 61  INLINE_VALUE text "It has text, a paragraph break, and a"
+00B6  01                  START
+00B7  0B                  element:span
+00B8  23                  attr:id
+00B9  03 84 06 73 74 61 74 75 73  INLINE_VALUE string "status"
+00C2  03 85 04 73 70 61 6E  INLINE_VALUE text "span"
+00C9  00                  END
+00CA  03 85 01 2E         INLINE_VALUE text "."
+00CE  0A                  command:br
+00CF  03 85 0D 49 74 20 61 6C 73 6F 20 68 61 73 20 61  INLINE_VALUE text "It also has a"
+00DF  01                  START
+00E0  0C                  element:a
+00E1  26                  attr:href
+00E2  03 84 05 2F 64 6F 63 73  INLINE_VALUE string "/docs"
+00EA  03 85 04 6C 69 6E 6B  INLINE_VALUE text "link"
+00F1  00                  END
+00F2  03 85 01 2E         INLINE_VALUE text "."
+00F6  00                  END
+00F7  08                  element:spacer
+00F8  25                  attr:height
+00F9  04 08               INLINE_BYTE 8
+00FB  01                  START
+00FC  07                  element:row
+00FD  23                  attr:id
+00FE  03 84 07 61 63 74 69 6F 6E 73  INLINE_VALUE string "actions"
+0108  01                  START
+0109  06                  element:block
+010A  24                  attr:width
+010B  04 78               INLINE_BYTE 120
+010D  03 85 04 4C 65 66 74  INLINE_VALUE text "Left"
+0114  00                  END
+0115  08                  element:spacer
+0116  24                  attr:width
+0117  04 08               INLINE_BYTE 8
+0119  01                  START
+011A  06                  element:block
+011B  24                  attr:width
+011C  04 78               INLINE_BYTE 120
+011E  03 85 05 52 69 67 68 74  INLINE_VALUE text "Right"
+0126  00                  END
+0127  00                  END
+0128  00                  END
+0129  00                  END

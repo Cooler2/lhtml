@@ -1,0 +1,335 @@
+<lhtml version=1>
+<head>
+  <title>Operations Console</title>
+  <meta name="description" content="A larger LHT example covering layout, resources, scripts, storage, network, canvas, and libraries"/>
+  <meta name="language" content="en"/>
+</head>
+
+<style>
+  @resource ui-atlas {
+    when minDepth=16: gif "/assets/dashboard-16bit.gif";
+    when minDepth=8:  gif "/assets/dashboard-vga.gif";
+    when minDepth=4:  gif "/assets/dashboard-ega.gif";
+  }
+
+  @resource hero-photo {
+    when minDepth=16: jpeg "/assets/ops-hero.jpg";
+    when minDepth=8:  gif  "/assets/ops-hero-vga.gif";
+    when minDepth=4:  gif  "/assets/ops-hero-ega.gif";
+  }
+
+  @resource logo-vector {
+    when canvas=full:  lhv "/assets/logo.lhv";
+    when canvas=basic: lhv "/assets/logo-basic.lhv";
+    when minDepth=8:   gif "/assets/logo.gif";
+    when minDepth=4:   gif "/assets/logo-ega.gif";
+  }
+
+  @imageDef logo         src=logo-vector;
+  @imageDef hero         src=hero-photo;
+  @imageDef icon-ok      src=ui-atlas crop="0,0,12,12";
+  @imageDef icon-warn    src=ui-atlas crop="12,0,12,12" tint=#D09520;
+  @imageDef icon-down    src=ui-atlas crop="24,0,12,12";
+  @imageDef icon-up      src=ui-atlas crop="24,0,12,12" flipY;
+  @imageDef panel-bg     src=ui-atlas crop="0,32,32,32" patch9="6,6,6,6";
+  @imageDef avatar-base  src=ui-atlas crop="64,0,32,32";
+  @imageDef avatar-live  src=ui-atlas crop="64,0,32,32";
+
+  const brand       = #245F8F;
+  const accent      = #8F4A7A;
+  const okColor     = #1D7A3A;
+  const warnColor   = #9A6200;
+  const dangerColor = #A84040;
+  const pageBg      = #EEF2F6;
+  const panelBg     = #FFFFFF;
+  const subtleBg    = #F6F8FA;
+  const line        = #C8D2DC;
+  const muted       = #617080;
+  const pad         = 10;
+
+  .app {
+    padding: 10;
+    font: default-sans-12;
+    color: systemText;
+    bgColor: pageBg;
+  }
+
+  .topbar {
+    padding: 8 10;
+    bgColor: brand;
+    color: #FFFFFF;
+  }
+
+  .brand { font: default-heading-18; bold: true; color: #FFFFFF; }
+  .muted { color: muted; }
+  .whiteMuted { color: #D8E7F3; }
+  .h1 { font: default-heading-24; bold: true; color: brand; }
+  .h2 { font: default-heading-18; bold: true; color: brand; }
+  .h3 { font: default-sans-14; bold: true; color: brand; }
+
+  .panel {
+    padding: pad;
+    bgColor: panelBg;
+    border: 1, line;
+  }
+
+  .panel:hover { border: 1, brand; }
+
+  .soft {
+    padding: 8;
+    bgColor: subtleBg;
+    border: 1, #D8E0E8;
+  }
+
+  .navItem {
+    padding: 5 8;
+    color: #FFFFFF;
+  }
+
+  .navItem:hover { bgColor: #3676A8; }
+  .navItem:active { bgColor: #17496F; }
+
+  .button {
+    padding: 4 10;
+    bgColor: systemButtonFace;
+    color: systemButtonText;
+    border: 1, #7E8892;
+  }
+
+  .button:hover { bgColor: #DCEBFF; }
+  .button:active { bgColor: #BFD8EF; }
+  .button:disabled { color: #8A8A8A; }
+
+  .primaryButton {
+    padding: 4 10;
+    bgColor: brand;
+    color: #FFFFFF;
+    border: 1, #194B72;
+  }
+
+  .primaryButton:hover { bgColor: #3478AA; }
+
+  .input {
+    padding: 4;
+    bgColor: #FFFFFF;
+    border: 1, #9AA8B6;
+  }
+
+  .metric {
+    padding: 8;
+    bgColor: #FFFFFF;
+    border: 1, #D5DEE8;
+  }
+
+  .metricGood { color: okColor; bold: true; }
+  .metricWarn { color: warnColor; bold: true; }
+  .metricBad  { color: dangerColor; bold: true; }
+
+  .tag {
+    padding: 3 7;
+    bgColor: #E7EEF6;
+    border: 1, #CAD6E2;
+  }
+
+  .tag:hover { bgColor: #D8E7F8; }
+
+  .tableHead {
+    padding: 4;
+    bgColor: brand;
+    color: #FFFFFF;
+    bold: true;
+  }
+
+  .tableCell {
+    padding: 4;
+    borderBottom: 1, #D7E0E8;
+  }
+
+  .rowWarn { bgColor: #FFF7E6; }
+  .rowBad  { bgColor: #FFECEC; }
+</style>
+
+<body class="app">
+  <block class="topbar">
+    <row>
+      <img name="logo" width=120 height=40 alt="Operations Console"/>
+      <spacer width=12/>
+      <block width=fill>
+        <block class="brand">Operations Console</block>
+        <block class="whiteMuted">A broad LHT feature example</block>
+      </block>
+      <flow width=260>
+        <block class="navItem" width=72 onClick=showOverview>Overview</block>
+        <block class="navItem" width=72 onClick=showIncidents>Incidents</block>
+        <block class="navItem" width=72 onClick=showSettings>Settings</block>
+      </flow>
+    </row>
+  </block>
+
+  <spacer height=10/>
+
+  <row>
+    <scrollbox id="sidebar" width=210 height=520 class="panel">
+      <h2>Teams</h2>
+      <ul>
+        <li><span class="metricGood"><img name="icon-ok" width=12 height=12/> Core API</span></li>
+        <li><span class="metricWarn"><img name="icon-warn" width=12 height=12/> Payments</span></li>
+        <li><span>Search</span></li>
+        <li>Data import</li>
+      </ul>
+
+      <spacer height=8/>
+      <h3>Filters</h3>
+      <flow>
+        <block class="tag" width=80 onClick=filterOpen>open</block>
+        <block class="tag" width=80 onClick=filterHigh>high</block>
+        <block class="tag" width=80 onClick=filterMine>mine</block>
+        <block class="tag" width=80 onClick=filterAll>all</block>
+      </flow>
+
+      <spacer height=8/>
+      <h3>Profile</h3>
+      <row>
+        <img name="avatar-live" width=32 height=32 alt="operator"/>
+        <spacer width=8/>
+        <block width=fill>
+          <block><b>Ada</b></block>
+          <block class="muted">on call</block>
+        </block>
+      </row>
+    </scrollbox>
+
+    <spacer width=10/>
+
+    <block width=fill>
+      <block class="panel">
+        <row>
+          <block width=fill>
+            <h1 id="viewTitle">Overview</h1>
+            <block class="muted">This view uses rows, flows, tables, forms, overlay hints, canvas, storage, and network callbacks.</block>
+          </block>
+          <button class="primaryButton" onClick=refreshData>Refresh</button>
+        </row>
+      </block>
+
+      <spacer height=10/>
+
+      <flow>
+        <block class="metric" width=150>
+          <block class="muted">Availability</block>
+          <block id="availability" class="metricGood">99.98%</block>
+          <block><img name="icon-up" width=12 height=12/> +0.03%</block>
+        </block>
+        <block class="metric" width=150>
+          <block class="muted">Latency p95</block>
+          <block id="latency" class="metricWarn">184 ms</block>
+          <block><img name="icon-down" width=12 height=12/> -12 ms</block>
+        </block>
+        <block class="metric" width=150>
+          <block class="muted">Open incidents</block>
+          <block id="openIncidents" class="metricBad">3</block>
+          <block>2 high priority</block>
+        </block>
+        <block class="metric" width=150>
+          <block class="muted">Deploys today</block>
+          <block id="deploys" class="metricGood">7</block>
+          <block>last at 14:10</block>
+        </block>
+      </flow>
+
+      <spacer height=10/>
+
+      <row>
+        <block class="panel" width=430>
+          <h2>Traffic</h2>
+          <canvas id="trafficChart" width=400 height=180 bgColor=#FFFFFF/>
+          <block class="muted">Chart drawn by an isolated library through a drawing-only context.</block>
+        </block>
+
+        <spacer width=10/>
+
+        <block class="panel" width=fill>
+          <h2>Create incident</h2>
+          <block>Title</block>
+          <input id="incidentTitle" class="input" width=fill placeholder="Short summary" onInput=markDirty/>
+          <spacer height=6/>
+          <block>Owner</block>
+          <input id="incidentOwner" class="input" width=180 placeholder="team or person" onInput=markDirty/>
+          <spacer height=8/>
+          <row>
+            <button class="primaryButton" onClick=createIncident>Create</button>
+            <spacer width=8/>
+            <button class="button" onClick=clearDraft>Clear</button>
+          </row>
+          <spacer height=8/>
+          <block>Status: <span id="formStatus" class="muted">idle</span></block>
+        </block>
+      </row>
+
+      <spacer height=10/>
+
+      <block class="panel" id="incidentPanel">
+        <h2>Incident queue</h2>
+        <table id="incidentTable" width=fill internalHBorders=1>
+          <col width=70/>
+          <col width=fill/>
+          <col width=120/>
+          <col width=90/>
+          <tr>
+            <td class="tableHead">ID</td>
+            <td class="tableHead">Title</td>
+            <td class="tableHead">Owner</td>
+            <td class="tableHead">State</td>
+          </tr>
+          <tr class="rowBad">
+            <td class="tableCell">INC-431</td>
+            <td class="tableCell"><b>Checkout error spike</b></td>
+            <td class="tableCell">Payments</td>
+            <td class="tableCell">open</td>
+          </tr>
+          <tr class="rowWarn">
+            <td class="tableCell">INC-430</td>
+            <td class="tableCell">Search indexing lag</td>
+            <td class="tableCell">Search</td>
+            <td class="tableCell">watch</td>
+          </tr>
+          <tr>
+            <td class="tableCell">INC-429</td>
+            <td class="tableCell">Import retries elevated</td>
+            <td class="tableCell">Data</td>
+            <td class="tableCell">open</td>
+          </tr>
+        </table>
+      </block>
+
+      <spacer height=10/>
+
+      <block class="panel">
+        <h2>Notes</h2>
+        <block>
+          This paragraph demonstrates inline links, modifiers, and nowrap runs.
+          Read the <a href="/docs/security">security note</a> before enabling
+          <span nowrap><img name="icon-warn" width=12 height=12/> cross-origin libraries</span>.
+          <p>
+          A second paragraph begins with a bare paragraph command, not a wrapping element.
+        </block>
+        <ol start=3>
+          <li>Libraries run in isolated scopes.</li>
+          <li>DOM object API is not available in library context.</li>
+          <li>Canvas is passed as a drawing-only capability.</li>
+        </ol>
+      </block>
+    </block>
+  </row>
+
+  <block overlay x=246 y=98 width=230 class="soft" id="toast">
+    <block><b id="toastTitle">Ready</b></block>
+    <block id="toastText" class="muted">Dashboard initialized.</block>
+  </block>
+</body>
+
+<library src="lib/format.ls" interface="Format">
+<library src="lib/charts.ls" interface="Charts">
+<library src="https://cdn.example.net/palette-1.0.0.ls" interface="Palette" integrity="sha256-demo-placeholder">
+<script src="scripts/app.ls">
+</lhtml>

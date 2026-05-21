@@ -1,0 +1,88 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 0F 46 6F 6E 74 20 42 61 73 69 63 20 54 65 73 74  INLINE_VALUE text "Font Basic Test"
+0028  00                  END
+0029  08                  element:meta
+002A  21                  attr:name
+002B  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+0039  22                  attr:content
+003A  03 84 25 53 65 6D 61 6E 74 69 63 20 66 6F 6E 74 20 66 61 6D 69 6C 79 20 61 6E 64 20 73 69 7A 65 20 65 78 61 6D 70 6C 65  INLINE_VALUE string "Semantic font family and size example"
+0062  00                  END
+0063  02 04               COMMAND BODY_BEGIN
+0065  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+0069  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+006D  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+0071  01                  START
+0072  05                  element:body
+0073  27                  attr:fontFace
+0074  41                  value:TFontFace:sans
+0075  28                  attr:fontSize
+0076  46                  value:TFontSize:normal
+0077  01                  START
+0078  06                  element:block
+0079  28                  attr:fontSize
+007A  47                  value:TFontSize:large
+007B  03 85 18 4C 61 72 67 65 20 68 65 61 64 69 6E 67 2D 6C 69 6B 65 20 74 65 78 74 2E  INLINE_VALUE text "Large heading-like text."
+0096  00                  END
+0097  08                  element:spacer
+0098  25                  attr:height
+0099  04 0C               INLINE_BYTE 12
+009B  01                  START
+009C  06                  element:block
+009D  03 85 17 4E 6F 72 6D 61 6C 20 73 61 6E 73 20 74 65 78 74 20 77 69 74 68 20 61  INLINE_VALUE text "Normal sans text with a"
+00B7  01                  START
+00B8  0B                  element:span
+00B9  28                  attr:fontSize
+00BA  45                  value:TFontSize:small
+00BB  03 85 11 73 6D 61 6C 6C 20 69 6E 6C 69 6E 65 20 73 70 61 6E  INLINE_VALUE text "small inline span"
+00CF  00                  END
+00D0  03 85 05 61 6E 64 20 61  INLINE_VALUE text "and a"
+00D8  01                  START
+00D9  0B                  element:span
+00DA  28                  attr:fontSize
+00DB  48                  value:TFontSize:xlarge
+00DC  03 85 11 6C 61 72 67 65 20 69 6E 6C 69 6E 65 20 73 70 61 6E  INLINE_VALUE text "large inline span"
+00F0  00                  END
+00F1  03 85 01 2E         INLINE_VALUE text "."
+00F5  00                  END
+00F6  08                  element:spacer
+00F7  25                  attr:height
+00F8  04 0C               INLINE_BYTE 12
+00FA  01                  START
+00FB  07                  element:row
+00FC  01                  START
+00FD  06                  element:block
+00FE  24                  attr:width
+00FF  04 B4               INLINE_BYTE 180
+0101  27                  attr:fontFace
+0102  43                  value:TFontFace:mono
+0103  28                  attr:fontSize
+0104  45                  value:TFontSize:small
+0105  03 85 31 4D 6F 6E 6F 20 73 6D 61 6C 6C 20 74 65 78 74 20 73 68 6F 75 6C 64 20 62 65 20 63 6F 6D 70 61 63 74 20 61 6E 64 20 77 72 61 70 20 6C 61 74 65 72 2E  INLINE_VALUE text "Mono small text should be compact and wrap later."
+0139  00                  END
+013A  08                  element:spacer
+013B  24                  attr:width
+013C  04 0C               INLINE_BYTE 12
+013E  01                  START
+013F  06                  element:block
+0140  24                  attr:width
+0141  04 DC               INLINE_BYTE 220
+0143  27                  attr:fontFace
+0144  42                  value:TFontFace:serif
+0145  28                  attr:fontSize
+0146  46                  value:TFontSize:normal
+0147  03 85 52 53 65 72 69 66 20 6E 6F 72 6D 61 6C 20 6D 61 70 73 20 74 6F 20 74 68 65 20 63 75 72 72 65 6E 74 20 64 65 62 75 67 20 66 6F 6E 74 20 66 6F 72 20 6E 6F 77 2C 20 62 75 74 20 6B 65 65 70 73 20 74 68 65 20 73 65 6D 61 6E 74 69 63 20 76 61 6C 75 65 2E  INLINE_VALUE text "Serif normal maps to the current debug font for now, but keeps the semantic value."
+019C  00                  END
+019D  00                  END
+019E  00                  END
+019F  00                  END

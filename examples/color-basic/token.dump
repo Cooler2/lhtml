@@ -1,0 +1,61 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Color Basic Test"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Text, background, and border color example"
+  END element:head
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:fontFace TOKEN value:TFontFace:sans
+    ATTR attr:fontSize TOKEN value:TFontSize:normal
+    ATTR attr:background INLINE_VALUE color "#F8F7F1"
+    ATTR attr:color INLINE_VALUE color "#20242A"
+    START element:block
+      ATTR attr:background INLINE_VALUE color "#EAF4FF"
+      ATTR attr:border INLINE_VALUE color "#49C"
+      ATTR attr:color INLINE_VALUE color "navy"
+      TEXT "A soft blue block with navy text and an RGB565 border."
+      command:p
+      TEXT "Inline text can switch to"
+      START element:span
+        ATTR attr:color INLINE_VALUE color "red"
+        TEXT "red"
+      END element:span
+      TEXT ","
+      START element:span
+        ATTR attr:color INLINE_VALUE color "#298A46"
+        TEXT "green"
+      END element:span
+      TEXT ", or"
+      START element:span
+        ATTR attr:color INLINE_VALUE color "#64C"
+        TEXT "short hex purple"
+      END element:span
+      TEXT "."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:row
+      START element:block
+        ATTR attr:width INLINE_BYTE 180
+        ATTR attr:background INLINE_VALUE color "#FFF3C4"
+        ATTR attr:border INLINE_VALUE color "yellow"
+        ATTR attr:color INLINE_VALUE color "#4A3A00"
+        TEXT "Warm panel text wraps inside a colored box."
+      END element:block
+      element:spacer
+        ATTR attr:width INLINE_BYTE 12
+      START element:block
+        ATTR attr:width INLINE_BYTE 220
+        ATTR attr:background INLINE_VALUE color "#F0F0F0"
+        ATTR attr:border INLINE_VALUE color "gray"
+        ATTR attr:color INLINE_VALUE color "#303030"
+        TEXT "A neutral panel keeps the same layout path but different paint commands."
+      END element:block
+    END element:row
+  END element:body
+END element:lhtml

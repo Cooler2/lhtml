@@ -1,0 +1,30 @@
+<lhtml version=1>
+<head>
+  <title>Style Class Test</title>
+  <meta name="description" content="Style stream class declarations">
+</head>
+
+<style>
+.page { background=#F8FAFC; color=#20242A; fontFace=sans; fontSize=normal }
+.notice { background=#EEF7FF; border=#49C; borderWidth=2; padding=12; color=navy }
+.accent { color=red }
+.primary { width=180; background=#E9F7EF; border=green; borderWidth=2; padding=10 }
+.secondary { width=210; background=#F0F0F0; border=gray; borderWidth=1; padding=10 }
+</style>
+
+<body class=page>
+  <block class=notice>
+    Class declarations now come from the STYLE stream.
+    <p>
+    Inline <span class=accent>accent text</span> is resolved through the class map.
+  </block>
+
+  <spacer height=12>
+
+  <row>
+    <block class=primary>Primary action area.</block>
+    <spacer width=12>
+    <block class=secondary>Secondary action area.</block>
+  </row>
+</body>
+</lhtml>

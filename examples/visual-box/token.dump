@@ -1,0 +1,66 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Visual Box Test"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Padding and border width rendering example"
+  END element:head
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:fontFace TOKEN value:TFontFace:sans
+    ATTR attr:fontSize TOKEN value:TFontSize:normal
+    ATTR attr:background INLINE_VALUE color "#F7F8FA"
+    ATTR attr:color INLINE_VALUE color "#20242A"
+    START element:block
+      ATTR attr:background INLINE_VALUE color "#FFFFFF"
+      ATTR attr:border INLINE_VALUE color "#445566"
+      ATTR attr:borderWidth INLINE_BYTE 1
+      ATTR attr:padding INLINE_BYTE 8
+      TEXT "Default-ish box uses explicit single pixel border and compact padding."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:block
+      ATTR attr:background INLINE_VALUE color "#E9F7EF"
+      ATTR attr:border INLINE_VALUE color "green"
+      ATTR attr:borderWidth INLINE_BYTE 4
+      ATTR attr:padding INLINE_BYTE 18
+      ATTR attr:color INLINE_VALUE color "#173B22"
+      TEXT "Wider padding pushes text inward and a thicker border consumes outer box space."
+      command:p
+      TEXT "Inline"
+      START element:span
+        ATTR attr:color INLINE_VALUE color "blue"
+        TEXT "runs"
+      END element:span
+      TEXT "still inherit the same box geometry."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:row
+      START element:block
+        ATTR attr:width INLINE_BYTE 170
+        ATTR attr:background INLINE_VALUE color "#FFF4D6"
+        ATTR attr:border INLINE_VALUE color "yellow"
+        ATTR attr:borderWidth INLINE_BYTE 3
+        ATTR attr:padding INLINE_BYTE 10
+        ATTR attr:color INLINE_VALUE color "#4A3A00"
+        TEXT "Warm compact panel."
+      END element:block
+      element:spacer
+        ATTR attr:width INLINE_BYTE 12
+      START element:block
+        ATTR attr:width INLINE_BYTE 210
+        ATTR attr:background INLINE_VALUE color "#EEF2FF"
+        ATTR attr:border INLINE_VALUE color "navy"
+        ATTR attr:borderWidth INLINE_BYTE 2
+        ATTR attr:padding INLINE_BYTE 14
+        ATTR attr:color INLINE_VALUE color "#18254A"
+        TEXT "Cool panel with larger inner inset and wrapped text."
+      END element:block
+    END element:row
+  END element:body
+END element:lhtml

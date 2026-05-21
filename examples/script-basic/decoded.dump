@@ -1,0 +1,47 @@
+<#document>
+  <lhtml version="1">
+    <head>
+      <title>
+        "Script basic"
+      </title>
+      <meta name="description" content="Minimal LJS token stream example">
+    </head>
+    <script>
+      "let expr = 2 + 3 * 4;
+Debug.log(expr);
+Debug.log((2 + 3) * 4);
+Debug.log(10 / 2 + 1);
+Debug.log(3 * 3 == 9);
+Debug.log((2 + 3) * 4 >= 20);
+Debug.log(null == null);
+function add(a, b) {return a + b;
+} Debug.log(add(5, 7));
+let outside = 100;
+function localShadow(value) {let outside = value + 1;
+return outside;
+} Debug.log(localShadow(4));
+Debug.log(outside);
+function paramShadow(outside) {return outside + 2;
+} Debug.log(paramShadow(5));
+Debug.log(outside);
+if (add(1, 2) == 3) {Debug.log("if-true");
+} else {Debug.log("if-bad");
+} if (outside < 10) {Debug.log("if-bad");
+} else {Debug.log("else-true");
+} if (outside == 100) Debug.log("if-single");
+if (outside < 10) Debug.log("if-single-bad");
+let single = 0;
+while (single < 2) single = single + 1;
+Debug.log(single);
+let x = 1;
+while (x < 4) {Debug.log(x);
+x = x + 1;
+} Browser.alert("done");
+"
+    </script>
+    <body>
+      <block width="420" fontFace="sans" fontSize="normal">
+        "Script token stream fixture."
+      </block>
+    </body>
+  </lhtml>

@@ -1,0 +1,67 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Table Basic Test"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Minimal table layout and rendering example"
+  END element:head
+  COMMAND STYLE_BEGIN
+    TEXT ".page { background=#F8FAFC; color=#20242A; fontFace=sans; fontSize=normal } .caption { background=#EEF7FF; border=#49C; borderWidth=2; padding=10; color=navy } .head { background=#E9F7EF; border=green; borderWidth=2; padding=8; fontSize=small } .cell { background=#FFFFFF; border=gray; borderWidth=1; padding=8 } .warn { background=#FFF3C4; border=yellow; borderWidth=2; padding=8; color=#4A3A00 }"
+  END STYLE
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:class INLINE_VALUE string "page"
+    START element:block
+      ATTR attr:class INLINE_VALUE string "caption"
+      TEXT "Tables use explicit cells. Each cell owns its own border and padding."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:table
+      ATTR attr:width INLINE_VALUE uint "520"
+      element:col
+      element:col
+      element:col
+      START element:tr
+        ATTR attr:class INLINE_VALUE string "head"
+        START element:td
+          TEXT "Name"
+        END element:td
+        START element:td
+          TEXT "Status"
+        END element:td
+        START element:td
+          TEXT "Notes"
+        END element:td
+      END element:tr
+      START element:tr
+        ATTR attr:class INLINE_VALUE string "cell"
+        START element:td
+          TEXT "Parser"
+        END element:td
+        START element:td
+          TEXT "Ready"
+        END element:td
+        START element:td
+          TEXT "Validation now rejects unsupported mini syntax."
+        END element:td
+      END element:tr
+      START element:tr
+        ATTR attr:class INLINE_VALUE string "cell"
+        START element:td
+          TEXT "Renderer"
+        END element:td
+        START element:td
+          ATTR attr:class INLINE_VALUE string "warn"
+          TEXT "Basic"
+        END element:td
+        START element:td
+          TEXT "Columns are equal width in this first slice."
+        END element:td
+      END element:tr
+    END element:table
+  END element:body
+END element:lhtml

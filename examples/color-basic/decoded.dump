@@ -1,0 +1,38 @@
+<#document>
+  <lhtml version="1">
+    <head>
+      <title>
+        "Color Basic Test"
+      </title>
+      <meta name="description" content="Text, background, and border color example">
+    </head>
+    <body fontFace="sans" fontSize="normal" background="#FFF6F6" color="#202429">
+      <block background="#EEF6FF" border="#4199CD" color="#003083">
+        "A soft blue block with navy text and an RGB565 border."
+        <p>
+        "Inline text can switch to"
+        <span color="#C52020">
+          "red"
+        </span>
+        ","
+        <span color="#298941">
+          "green"
+        </span>
+        ", or"
+        <span color="#6244CD">
+          "short hex purple"
+        </span>
+        "."
+      </block>
+      <spacer height="12">
+      <row>
+        <block width="180" background="#FFF2C5" border="#EEC231" color="#4A3800">
+          "Warm panel text wraps inside a colored box."
+        </block>
+        <spacer width="12">
+        <block width="220" background="#F6F2F6" border="#838183" color="#313031">
+          "A neutral panel keeps the same layout path but different paint commands."
+        </block>
+      </row>
+    </body>
+  </lhtml>

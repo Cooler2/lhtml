@@ -1,0 +1,83 @@
+<lhtml version=1>
+<head>
+  <title>Invalid script examples</title>
+  <meta name="description" content="Readable invalid LJS validation cases">
+</head>
+<body>
+  <block width=620 font=sans,normal>
+    Invalid LJS examples. Full snippets are stored in LHT comments in this file.
+  </block>
+
+  <!--
+  Unknown character:
+  <lhtml><script>let x = @;</script><body></body></lhtml>
+  Expected: Unexpected script character
+  -->
+  <block width=620 font=mono,small>
+    unknown character: let x = @; -> Unexpected script character
+  </block>
+
+  <!--
+  Unterminated string:
+  <lhtml><script>Browser.alert("oops);</script><body></body></lhtml>
+  Expected: Unterminated script string literal
+  -->
+  <block width=620 font=mono,small>
+    unterminated string: Browser.alert("oops); -> Unterminated script string literal
+  </block>
+
+  <!--
+  Missing identifier after let:
+  <lhtml><script>let = 1;</script><body></body></lhtml>
+  Expected: Expected identifier after let
+  -->
+  <block width=620 font=mono,small>
+    missing identifier: let = 1; -> Expected identifier after let
+  </block>
+
+  <!--
+  Missing semicolon:
+  <lhtml><script>let x = 1</script><body></body></lhtml>
+  Expected: Expected ";" after let statement
+  -->
+  <block width=620 font=mono,small>
+    missing semicolon: let x = 1 -> Expected ";" after let statement
+  </block>
+
+  <!--
+  Bad call:
+  <lhtml><script>Debug.log(;);</script><body></body></lhtml>
+  Expected: Unexpected script punctuation in expression
+  -->
+  <block width=620 font=mono,small>
+    bad call: Debug.log(;); -> Unexpected script punctuation in expression
+  </block>
+
+  <!--
+  Bare host alias:
+  <lhtml><script>log(1);</script><body></body></lhtml>
+  Expected: Expected "=" in assignment
+  -->
+  <block width=620 font=mono,small>
+    bare host alias: log(1); -> Expected "=" in assignment
+  </block>
+
+  <!--
+  Broken while condition:
+  <lhtml><script>while (x < 4 { Debug.log(x); }</script><body></body></lhtml>
+  Expected: Unexpected script punctuation in expression
+  -->
+  <block width=620 font=mono,small>
+    broken while condition: while (x LT 4 { ... } -> Unexpected script punctuation in expression
+  </block>
+
+  <!--
+  Stray else:
+  <lhtml><script>else { Debug.log(1); }</script><body></body></lhtml>
+  Expected: Unexpected script else
+  -->
+  <block width=620 font=mono,small>
+    stray else: else { Debug.log(1); } -> Unexpected script else
+  </block>
+</body>
+</lhtml>

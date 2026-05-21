@@ -1,0 +1,24 @@
+<lhtml version=1>
+<head>
+  <title>Minimal LHT</title>
+  <meta name="description" content="Small parser and round-trip test">
+</head>
+
+<body>
+  <block id="intro">
+    Minimal LHT document.
+    <p>
+    It has text, a paragraph break, and a <span id="status">span</span>.
+    <br>
+    It also has a <a href="/docs">link</a>.
+  </block>
+
+  <spacer height=8>
+
+  <row id="actions">
+    <block width=120>Left</block>
+    <spacer width=8>
+    <block width=120>Right</block>
+  </row>
+</body>
+</lhtml>

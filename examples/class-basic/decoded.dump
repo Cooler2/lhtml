@@ -1,0 +1,30 @@
+<#document>
+  <lhtml version="1">
+    <head>
+      <title>
+        "Class Basic Test"
+      </title>
+      <meta name="description" content="Class attribute round-trip and resolver groundwork">
+    </head>
+    <body class="page" fontFace="sans" fontSize="normal" background="#FFFAFF" color="#202429">
+      <block class="notice" background="#EEF6FF" border="#4199CD" borderWidth="2" padding="12" color="#003083">
+        "Class names are preserved on blocks while inline attributes still drive this slice."
+        <p class="paragraph">
+        "Inline"
+        <span class="accent" color="#C52020">
+          "classed spans"
+        </span>
+        "keep their identity for the upcoming style resolver."
+      </block>
+      <spacer class="gap" height="12">
+      <row class="actions">
+        <block class="primary" width="180" background="#EEF6EE" border="#209141" borderWidth="2" padding="10">
+          "Primary action area."
+        </block>
+        <spacer class="gutter" width="12">
+        <block class="secondary" width="210" background="#F6F2F6" border="#838183" borderWidth="1" padding="10">
+          "Secondary action area."
+        </block>
+      </row>
+    </body>
+  </lhtml>

@@ -1,0 +1,33 @@
+<#document>
+  <lhtml version="1">
+    <head>
+      <title>
+        "Style Class Test"
+      </title>
+      <meta name="description" content="Style stream class declarations">
+    </head>
+    <style>
+      ".page { background=#FFFAFF; color=#202429; fontFace=sans; fontSize=normal } .notice { background=#EEF6FF; border=#4199CD; borderWidth=2; padding=12; color=#003083 } .accent { color=#C52020 } .primary { width=180; background=#EEF6EE; border=#209141; borderWidth=2; padding=10 } .secondary { width=210; background=#F6F2F6; border=#838183; borderWidth=1; padding=10 }"
+    </style>
+    <body class="page">
+      <block class="notice">
+        "Class declarations now come from the STYLE stream."
+        <p>
+        "Inline"
+        <span class="accent">
+          "accent text"
+        </span>
+        "is resolved through the class map."
+      </block>
+      <spacer height="12">
+      <row>
+        <block class="primary">
+          "Primary action area."
+        </block>
+        <spacer width="12">
+        <block class="secondary">
+          "Secondary action area."
+        </block>
+      </row>
+    </body>
+  </lhtml>

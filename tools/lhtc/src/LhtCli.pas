@@ -1,0 +1,884 @@
+unit LhtCli;
+
+{$mode objfpc}{$H+}
+
+interface
+
+procedure RunLhtC;
+
+implementation
+
+uses
+  SysUtils, Classes, LhtDom, LhtParser, LhtDump, LhtTokenDump, LhtBinaryEncode,
+  LhtBinaryDecode, LhtBinaryDump, LhtRender, LhtTokenTable, LhtScriptRuntime;
+
+function LoadTextFile(const FileName: string): string;
+var
+  S: TStringList;
+begin
+  S := TStringList.Create;
+  try
+    S.LoadFromFile(FileName);
+    Result := S.Text;
+  finally
+    S.Free;
+  end;
+end;
+
+procedure Usage;
+begin
+  WriteLn('Usage: lhtc <command> <file.lht>');
+  WriteLn;
+  WriteLn('Commands:');
+  WriteLn('  parse    Parse and report success');
+  WriteLn('  dump     Parse and print normalized tree');
+  WriteLn('  tokendump Parse and print mini token stream');
+  WriteLn('  tokendumpfile Write mini token stream: lhtc tokendumpfile <input.lht> <output.dump>');
+  WriteLn('  encode   Encode mini binary: lhtc encode <input.lht> <output.lhb>');
+  WriteLn('  decode   Decode mini binary and print normalized tree');
+  WriteLn('  decodedump Decode mini binary to dump file');
+  WriteLn('  bintokendump Decode mini binary and print token stream');
+  WriteLn('  bindump  Disassemble mini binary byte stream');
+  WriteLn('  bindumpfile Disassemble mini binary: lhtc bindumpfile <input.lhb> <output.dump>');
+  WriteLn('  render   Render mini DOM to BMP: lhtc render <input.lht> <output.bmp>');
+  WriteLn('  rendergdi Render mini DOM through GDI: lhtc rendergdi <input.lht> <output.bmp>');
+  WriteLn('  runscript Execute document <script> sections: lhtc runscript <input.lht>');
+  WriteLn('  dictdump Print current mini dictionaries as markdown');
+  WriteLn('  dictdumpfile Write current mini dictionaries: lhtc dictdumpfile <output.md>');
+  WriteLn('  checkminimal Check examples/minimal fixtures');
+  WriteLn('  checkexample Check one fixture directory: lhtc checkexample <examples/name>');
+  WriteLn('  checkvalidation Check parser validation failures');
+  WriteLn('  checkall Check all maintained example fixtures');
+end;
+
+function ParseFile(const FileName: string): TNode;
+var
+  Parser: TLhtParser;
+begin
+  Parser := TLhtParser.Create(LoadTextFile(FileName));
+  try
+    Result := Parser.Parse;
+  finally
+    Parser.Free;
+  end;
+end;
+
+procedure RunReadCommand(const Command, FileName: string);
+var
+  Root: TNode;
+begin
+  Root := ParseFile(FileName);
+  try
+    if Command = 'parse' then
+      WriteLn('OK: ', FileName)
+    else if Command = 'dump' then
+      DumpNode(Root, 0)
+    else if Command = 'tokendump' then
+      DumpTokens(Root, 0)
+    else
+      raise Exception.CreateFmt('Unknown command: %s', [Command]);
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure RunEncode(const InputName, OutputName: string);
+var
+  Root: TNode;
+  Stream: TFileStream;
+begin
+  Root := ParseFile(InputName);
+  try
+    Stream := TFileStream.Create(OutputName, fmCreate);
+    try
+      EncodeMiniBinary(Root, Stream);
+    finally
+      Stream.Free;
+    end;
+  finally
+    Root.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+procedure RunRender(const InputName, OutputName: string);
+var
+  Root: TNode;
+begin
+  Root := ParseFile(InputName);
+  try
+    RenderMiniToBmp(Root, OutputName);
+  finally
+    Root.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+procedure RunRenderGdi(const InputName, OutputName: string);
+var
+  Root: TNode;
+begin
+  Root := ParseFile(InputName);
+  try
+    RenderMiniToGdiBmp(Root, OutputName);
+  finally
+    Root.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+procedure RunDecodeCommand(const Command, FileName: string);
+var
+  Stream: TFileStream;
+  Root: TNode;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    Root := DecodeMiniBinary(Stream);
+  finally
+    Stream.Free;
+  end;
+
+  try
+    if Command = 'decode' then
+      DumpNode(Root, 0)
+    else if Command = 'bintokendump' then
+      DumpTokens(Root, 0)
+    else
+      raise Exception.CreateFmt('Unknown decode command: %s', [Command]);
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure AppendScriptOutput(Node: TNode; var Output: string);
+var
+  I: Integer;
+begin
+  if (Node.Kind = nkElement) and (Node.Name = 'script') then
+    Output := Output + ExecuteLjsScriptText(Node.TextContent);
+  for I := 0 to High(Node.Children) do
+    AppendScriptOutput(Node.Children[I], Output);
+end;
+
+function ExecuteDocumentScripts(Root: TNode): string;
+begin
+  Result := '';
+  AppendScriptOutput(Root, Result);
+end;
+
+procedure RunScript(const InputName: string);
+var
+  Root: TNode;
+  Output: string;
+begin
+  Root := ParseFile(InputName);
+  try
+    Output := ExecuteDocumentScripts(Root);
+  finally
+    Root.Free;
+  end;
+  if Output <> '' then
+    Write(Output);
+end;
+
+procedure RunBinDump(FileName: string);
+var
+  Stream: TFileStream;
+  OutStream: THandleStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    OutStream := THandleStream.Create(TTextRec(Output).Handle);
+    try
+      DumpMiniBinaryDisasm(Stream, OutStream);
+    finally
+      OutStream.Free;
+    end;
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure RunTokenDumpFile(const InputName, OutputName: string);
+var
+  Root: TNode;
+  OutStream: TFileStream;
+begin
+  Root := ParseFile(InputName);
+  try
+    OutStream := TFileStream.Create(OutputName, fmCreate);
+    try
+      DumpTokensToStream(Root, 0, OutStream);
+    finally
+      OutStream.Free;
+    end;
+  finally
+    Root.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+procedure RunBinDumpFile(const InputName, OutputName: string);
+var
+  InStream: TFileStream;
+  OutStream: TFileStream;
+begin
+  InStream := TFileStream.Create(InputName, fmOpenRead or fmShareDenyWrite);
+  try
+    OutStream := TFileStream.Create(OutputName, fmCreate);
+    try
+      DumpMiniBinaryDisasm(InStream, OutStream);
+    finally
+      OutStream.Free;
+    end;
+  finally
+    InStream.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+procedure RunDecodeDump(const InputName, OutputName: string);
+var
+  InStream: TFileStream;
+  OutStream: TFileStream;
+  Root: TNode;
+begin
+  InStream := TFileStream.Create(InputName, fmOpenRead or fmShareDenyWrite);
+  try
+    Root := DecodeMiniBinary(InStream);
+  finally
+    InStream.Free;
+  end;
+
+  try
+    OutStream := TFileStream.Create(OutputName, fmCreate);
+    try
+      DumpNodeToStream(Root, 0, OutStream);
+    finally
+      OutStream.Free;
+    end;
+  finally
+    Root.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+function TokenKindName(Kind: TTokenKind): string;
+begin
+  case Kind of
+    tkElement: Result := 'element';
+    tkCommand: Result := 'command';
+    tkAttr: Result := 'attr';
+    tkValue: Result := 'value';
+  else
+    Result := 'unknown';
+  end;
+end;
+
+procedure WriteMdLine(Stream: TStream; const S: string);
+begin
+  if S <> '' then
+    Stream.WriteBuffer(S[1], Length(S));
+  Stream.WriteBuffer(LineEnding[1], Length(LineEnding));
+end;
+
+procedure DumpDictionaryToStream(Stream: TStream; Dict: TTokenDictKind);
+var
+  I, Entry: Integer;
+  Def: TTokenDef;
+begin
+  WriteMdLine(Stream, '## ' + DictName(Dict));
+  WriteMdLine(Stream, '');
+  WriteMdLine(Stream, '| Entry | Code | Kind | Name | Bare | Integer |');
+  WriteMdLine(Stream, '|---:|---:|---|---|---|---|');
+  Entry := 0;
+  for I := 0 to MiniTokenDefCount - 1 do
+  begin
+    Def := MiniTokenDefByIndex(I);
+    if Def.Dict <> Dict then
+      Continue;
+    WriteMdLine(Stream, Format('| `%d` | `%s` | `%s` | `%s` | `%s` | `%s` |',
+      [Entry, IntToHex(Def.Code, 2), TokenKindName(Def.Kind), Def.Name,
+       BoolToStr(Def.Bare, True), BoolToStr(Def.IntegerValue, True)]));
+    Inc(Entry);
+  end;
+  WriteMdLine(Stream, '');
+end;
+
+procedure DumpDictionariesToStream(Stream: TStream);
+begin
+  WriteMdLine(Stream, '# Current Mini Dictionary Snapshot');
+  WriteMdLine(Stream, '');
+  WriteMdLine(Stream, 'Generated from `src/LhtTokenTable.pas` by `lhtc dictdumpfile`.');
+  WriteMdLine(Stream, 'This is a point-in-time snapshot, not a normative maintained reference.');
+  WriteMdLine(Stream, '');
+  WriteMdLine(Stream, '| Dict ID | Dictionary | Import count |');
+  WriteMdLine(Stream, '|---:|---|---:|');
+  WriteMdLine(Stream, Format('| `%d` | `%s` | `%d` |',
+    [DictIdForKind(tdDoc), DictName(tdDoc), TokenCountForDict(tdDoc)]));
+  WriteMdLine(Stream, Format('| `%d` | `%s` | `%d` |',
+    [DictIdForKind(tdDom), DictName(tdDom), TokenCountForDict(tdDom)]));
+  WriteMdLine(Stream, Format('| `%d` | `%s` | `%d` |',
+    [DictIdForKind(tdStyle), DictName(tdStyle), TokenCountForDict(tdStyle)]));
+  WriteMdLine(Stream, Format('| `%d` | `%s` | `%d` |',
+    [DictIdForKind(tdAttr), DictName(tdAttr), TokenCountForDict(tdAttr)]));
+  WriteMdLine(Stream, Format('| `%d` | `%s` | `%d` |',
+    [DictIdForKind(tdValue), DictName(tdValue), TokenCountForDict(tdValue)]));
+  WriteMdLine(Stream, Format('| `%d` | `%s` | `%d` |',
+    [DictIdForKind(tdLjs), DictName(tdLjs), TokenCountForDict(tdLjs)]));
+  WriteMdLine(Stream, '');
+  DumpDictionaryToStream(Stream, tdDoc);
+  DumpDictionaryToStream(Stream, tdDom);
+  DumpDictionaryToStream(Stream, tdStyle);
+  DumpDictionaryToStream(Stream, tdAttr);
+  DumpDictionaryToStream(Stream, tdValue);
+  DumpDictionaryToStream(Stream, tdLjs);
+end;
+
+procedure RunDictDump;
+var
+  OutStream: THandleStream;
+begin
+  OutStream := THandleStream.Create(TTextRec(Output).Handle);
+  try
+    DumpDictionariesToStream(OutStream);
+  finally
+    OutStream.Free;
+  end;
+end;
+
+procedure RunDictDumpFile(const OutputName: string);
+var
+  OutStream: TFileStream;
+begin
+  OutStream := TFileStream.Create(OutputName, fmCreate);
+  try
+    DumpDictionariesToStream(OutStream);
+  finally
+    OutStream.Free;
+  end;
+  WriteLn('Wrote ', OutputName);
+end;
+
+function StreamAsString(Stream: TStream): string;
+begin
+  SetLength(Result, Stream.Size);
+  if Stream.Size = 0 then
+    Exit;
+  Stream.Position := 0;
+  Stream.ReadBuffer(Result[1], Length(Result));
+end;
+
+function FileAsString(const FileName: string): string;
+var
+  Stream: TFileStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    Result := StreamAsString(Stream);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure RequireSameString(const Name, ExpectedFile, Actual: string);
+var
+  Expected: string;
+begin
+  Expected := FileAsString(ExpectedFile);
+  if Expected <> Actual then
+    raise Exception.CreateFmt('%s fixture mismatch: %s', [Name, ExpectedFile]);
+  WriteLn('OK ', Name);
+end;
+
+procedure RunCheckExample(const DirName: string);
+var
+  SourceName: string;
+  BinaryName: string;
+  DecodedDumpName: string;
+  TokenDumpName: string;
+  BinaryDumpName: string;
+  RuntimeDumpName: string;
+  Root: TNode;
+  DecodedRoot: TNode;
+  Binary: TMemoryStream;
+  Dump: TStringStream;
+begin
+  SourceName := IncludeTrailingPathDelimiter(DirName) + 'index.lht';
+  BinaryName := IncludeTrailingPathDelimiter(DirName) + 'index.lhb';
+  DecodedDumpName := IncludeTrailingPathDelimiter(DirName) + 'decoded.dump';
+  TokenDumpName := IncludeTrailingPathDelimiter(DirName) + 'token.dump';
+  BinaryDumpName := IncludeTrailingPathDelimiter(DirName) + 'binary.dump';
+  RuntimeDumpName := IncludeTrailingPathDelimiter(DirName) + 'runtime.dump';
+
+  Root := ParseFile(SourceName);
+  try
+    Binary := TMemoryStream.Create;
+    try
+      EncodeMiniBinary(Root, Binary);
+      RequireSameString('binary', BinaryName, StreamAsString(Binary));
+
+      Dump := TStringStream.Create('');
+      try
+        DumpTokensToStream(Root, 0, Dump);
+        RequireSameString('token dump', TokenDumpName, Dump.DataString);
+      finally
+        Dump.Free;
+      end;
+
+      Binary.Position := 0;
+      DecodedRoot := DecodeMiniBinary(Binary);
+      try
+        Dump := TStringStream.Create('');
+        try
+          DumpNodeToStream(DecodedRoot, 0, Dump);
+          RequireSameString('decoded dump', DecodedDumpName, Dump.DataString);
+        finally
+          Dump.Free;
+        end;
+      finally
+        DecodedRoot.Free;
+      end;
+
+      Binary.Position := 0;
+      Dump := TStringStream.Create('');
+      try
+        DumpMiniBinaryDisasm(Binary, Dump);
+        RequireSameString('binary dump', BinaryDumpName, Dump.DataString);
+      finally
+        Dump.Free;
+      end;
+
+      if FileExists(RuntimeDumpName) then
+        RequireSameString('runtime dump', RuntimeDumpName,
+          ExecuteDocumentScripts(Root));
+    finally
+      Binary.Free;
+    end;
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure RunCheckMinimal;
+begin
+  RunCheckExample('examples\minimal');
+end;
+
+procedure RunCheckValidation; forward;
+procedure RunCheckScriptRuntime; forward;
+
+procedure RunCheckAll;
+begin
+  RunCheckExample('examples\minimal');
+  RunCheckExample('examples\font-basic');
+  RunCheckExample('examples\color-basic');
+  RunCheckExample('examples\visual-box');
+  RunCheckExample('examples\class-basic');
+  RunCheckExample('examples\style-class-basic');
+  RunCheckExample('examples\table-basic');
+  RunCheckExample('examples\script-basic');
+  RunCheckValidation;
+  RunCheckScriptRuntime;
+end;
+
+procedure ExpectParseFail(const Name, Source, MessagePart: string);
+var
+  Parser: TLhtParser;
+  Root: TNode;
+begin
+  Parser := TLhtParser.Create(Source);
+  Root := nil;
+  try
+    try
+      Root := Parser.Parse;
+      raise Exception.CreateFmt('validation case did not fail: %s', [Name]);
+    except
+      on E: Exception do
+      begin
+        if Pos(MessagePart, E.Message) = 0 then
+          raise Exception.CreateFmt('validation case %s failed with unexpected message: %s',
+            [Name, E.Message]);
+        WriteLn('OK validation ', Name);
+      end;
+    end;
+  finally
+    Root.Free;
+    Parser.Free;
+  end;
+end;
+
+procedure RunCheckValidation;
+begin
+  ExpectParseFail('unknown tag',
+    '<lhtml><body><img></body></lhtml>',
+    'Unknown mini token name');
+  ExpectParseFail('unknown attr',
+    '<lhtml version=1><body bogus=1></body></lhtml>',
+    'Unknown mini token name');
+  ExpectParseFail('bad uint',
+    '<lhtml version=no><body></body></lhtml>',
+    'expects unsigned integer');
+  ExpectParseFail('bad color',
+    '<lhtml><body color=#GGG></body></lhtml>',
+    'expects color');
+  ExpectParseFail('closing bare',
+    '<lhtml><body><br></br></body></lhtml>',
+    'must not have a closing tag');
+  ExpectParseFail('bad style property',
+    '<lhtml><style>.x { bogus=1 }</style><body></body></lhtml>',
+    'Unknown mini token name');
+  ExpectParseFail('table child',
+    '<lhtml><body><table><td>Bad</td></table></body></lhtml>',
+    'is not allowed inside <table>');
+  ExpectParseFail('late col',
+    '<lhtml><body><table><tr><td>Ok</td></tr><col></table></body></lhtml>',
+    'must appear before the first <tr>');
+  ExpectParseFail('tr child',
+    '<lhtml><body><table><tr><block>Bad</block></tr></table></body></lhtml>',
+    'Element <tr> only allows <td> children');
+  ExpectParseFail('td block child',
+    '<lhtml><body><table><tr><td><block>Bad</block></td></tr></table></body></lhtml>',
+    'is not allowed inside <td>');
+  ExpectParseFail('unterminated lht comment',
+    '<lhtml><!-- nope<body></body></lhtml>',
+    'Unterminated LHT comment');
+  ExpectParseFail('bad script char',
+    '<lhtml><script>let x = @;</script><body></body></lhtml>',
+    'Unexpected script character');
+  ExpectParseFail('bad script string',
+    '<lhtml><script>Browser.alert("oops);</script><body></body></lhtml>',
+    'Unterminated script string literal');
+  ExpectParseFail('script let missing ident',
+    '<lhtml><script>let = 1;</script><body></body></lhtml>',
+    'Expected identifier after let');
+  ExpectParseFail('script missing semicolon',
+    '<lhtml><script>let x = 1</script><body></body></lhtml>',
+    'Expected ";" after let statement');
+  ExpectParseFail('script bad call',
+    '<lhtml><script>Debug.log(;);</script><body></body></lhtml>',
+    'Unexpected script punctuation in expression');
+  ExpectParseFail('script host object extra argument',
+    '<lhtml><script>Debug.log(1, 2);</script><body></body></lhtml>',
+    'Script host object call expects exactly one argument');
+  ExpectParseFail('script bare host alias rejected',
+    '<lhtml><script>log(1);</script><body></body></lhtml>',
+    'Expected "=" in assignment');
+  ExpectParseFail('script unbalanced paren',
+    '<lhtml><script>while (x < 4 { Debug.log(x); }</script><body></body></lhtml>',
+    'Unexpected script punctuation in expression');
+  ExpectParseFail('script stray else',
+    '<lhtml><script>else { Debug.log(1); }</script><body></body></lhtml>',
+    'Unexpected script else');
+  ExpectParseFail('script expression trailing token',
+    '<lhtml><script>let x = 1 2;</script><body></body></lhtml>',
+    'Unexpected trailing script expression token');
+  ExpectParseFail('script return outside function',
+    '<lhtml><script>return 1;</script><body></body></lhtml>',
+    'Unexpected script return outside function');
+end;
+
+procedure ExpectScriptOutput(const Name, Source, Expected: string);
+var
+  Actual: string;
+begin
+  Actual := ExecuteLjsScriptText(Source);
+  if Actual <> Expected then
+    raise Exception.CreateFmt('script runtime case %s output mismatch: got "%s"',
+      [Name, Actual]);
+  WriteLn('OK script runtime ', Name);
+end;
+
+procedure ExpectScriptRuntimeFail(const Name, Source, MessagePart: string);
+begin
+  try
+    ExecuteLjsScriptText(Source);
+    raise Exception.CreateFmt('script runtime case did not fail: %s', [Name]);
+  except
+    on E: Exception do
+    begin
+      if Pos(MessagePart, E.Message) = 0 then
+        raise Exception.CreateFmt('script runtime case %s failed with unexpected message: %s',
+          [Name, E.Message]);
+      WriteLn('OK script runtime ', Name);
+    end;
+  end;
+end;
+
+procedure ExpectScriptRuntimeNoHostsFail(const Name, Source, MessagePart: string);
+var
+  Profile: TLjsRuntimeProfile;
+begin
+  Profile := IsolatedLjsRuntimeProfile;
+  try
+    ExecuteLjsScriptTextWithProfile(Source, Profile);
+    raise Exception.CreateFmt('script runtime case did not fail: %s', [Name]);
+  except
+    on E: Exception do
+    begin
+      if Pos(MessagePart, E.Message) = 0 then
+        raise Exception.CreateFmt('script runtime case %s failed with unexpected message: %s',
+          [Name, E.Message]);
+      WriteLn('OK script runtime ', Name);
+    end;
+  end;
+end;
+
+procedure ExpectScriptRuntimeProfileFail(const Name, Source,
+  MessagePart: string; const Profile: TLjsRuntimeProfile);
+begin
+  try
+    ExecuteLjsScriptTextWithProfile(Source, Profile);
+    raise Exception.CreateFmt('script runtime case did not fail: %s', [Name]);
+  except
+    on E: Exception do
+    begin
+      if Pos(MessagePart, E.Message) = 0 then
+        raise Exception.CreateFmt('script runtime case %s failed with unexpected message: %s',
+          [Name, E.Message]);
+      WriteLn('OK script runtime ', Name);
+    end;
+  end;
+end;
+
+procedure RunCheckScriptRuntime;
+var
+  Profile: TLjsRuntimeProfile;
+begin
+  ExpectScriptOutput('if true',
+    'let x = 2 + 3 * 4; if (x == 14) { Debug.log("ok"); } else { Debug.log("bad"); }',
+    'LOG: ok' + #10);
+  ExpectScriptOutput('if else',
+    'let x = 1; if (x > 2) { Debug.log("bad"); } else { Browser.alert("else"); }',
+    'ALERT: else' + #10);
+  ExpectScriptOutput('if else condition once',
+    'function flag() { Debug.log("cond"); return false; } if (flag()) { Debug.log("bad"); } else { Debug.log("else"); }',
+    'LOG: cond' + #10 + 'LOG: else' + #10);
+  ExpectScriptOutput('string concat',
+    'let name = "LJS"; Debug.log("hello " + name);',
+    'LOG: hello LJS' + #10);
+  ExpectScriptOutput('host object calls',
+    'Debug.log("debug"); Browser.alert("browser");',
+    'LOG: debug' + #10 + 'ALERT: browser' + #10);
+  ExpectScriptRuntimeFail('unknown host object call',
+    'Debug.alert("bad");',
+    'Unknown script host call');
+  ExpectScriptRuntimeNoHostsFail('host object not registered',
+    'Debug.log("debug");',
+    'Unknown script host call');
+  ExpectScriptOutput('parenthesized precedence',
+    'Debug.log((2 + 3) * 4);',
+    'LOG: 20' + #10);
+  ExpectScriptOutput('if single statement',
+    'if (true) Debug.log("single-if");',
+    'LOG: single-if' + #10);
+  ExpectScriptOutput('if else single statement',
+    'if (false) Debug.log("bad"); else Debug.log("single-else");',
+    'LOG: single-else' + #10);
+  ExpectScriptOutput('while single statement',
+    'let x = 1; while (x < 4) x = x + 1; Debug.log(x);',
+    'LOG: 4' + #10);
+  ExpectScriptOutput('function call',
+    'function inc(x) { return x + 1; } Debug.log(inc(4));',
+    'LOG: 5' + #10);
+  ExpectScriptOutput('function local scope',
+    'let x = 10; function keepLocal(x) { let y = x + 1; return y; } Debug.log(keepLocal(2)); Debug.log(x);',
+    'LOG: 3' + #10 + 'LOG: 10' + #10);
+  ExpectScriptOutput('function missing argument is null',
+    'function second(a, b) { return b; } Debug.log(second(1));',
+    'LOG: null' + #10);
+  ExpectScriptOutput('function extra arguments ignored',
+    'function first(a) { return a; } Debug.log(first(1, 2, 3));',
+    'LOG: 1' + #10);
+  ExpectScriptRuntimeFail('unknown variable',
+    'Debug.log(missing);',
+    'Unknown script variable');
+  ExpectScriptRuntimeFail('duplicate variable',
+    'let x = 1; let x = 2;',
+    'Duplicate script variable');
+  ExpectScriptRuntimeFail('stack slot limit',
+    'function grow(n) { return grow(n + 1); } Debug.log(grow(0));',
+    'Script runtime stack slot limit exceeded');
+  Profile := IsolatedLjsRuntimeProfile;
+  Profile.StepLimit := 3;
+  ExpectScriptRuntimeProfileFail('profile step limit',
+    'let x = 0; while (x < 10) x = x + 1;',
+    'Script runtime step limit exceeded', Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  Profile.OutputRecordLimit := 1;
+  ExpectScriptRuntimeProfileFail('profile output record limit',
+    'Debug.log(1); Debug.log(2);',
+    'Script runtime output record limit exceeded', Profile);
+  Profile := DefaultLjsRuntimeProfile;
+  Profile.StringLengthLimit := 5;
+  ExpectScriptRuntimeProfileFail('profile string literal limit',
+    'Debug.log("abcdef");',
+    'Script runtime string length limit exceeded', Profile);
+  ExpectScriptRuntimeProfileFail('profile string concat limit',
+    'Debug.log("abc" + "def");',
+    'Script runtime string length limit exceeded', Profile);
+end;
+
+procedure RunLhtC;
+begin
+  try
+    if ParamCount < 1 then
+    begin
+      Usage;
+      Halt(1);
+    end;
+    if ParamStr(1) = 'checkminimal' then
+    begin
+      if ParamCount <> 1 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunCheckMinimal;
+    end
+    else if ParamStr(1) = 'checkexample' then
+    begin
+      if ParamCount <> 2 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunCheckExample(ParamStr(2));
+    end
+    else if ParamStr(1) = 'checkall' then
+    begin
+      if ParamCount <> 1 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunCheckAll;
+    end
+    else if ParamStr(1) = 'checkvalidation' then
+    begin
+      if ParamCount <> 1 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunCheckValidation;
+    end
+    else if ParamStr(1) = 'dictdump' then
+    begin
+      if ParamCount <> 1 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunDictDump;
+    end
+    else if ParamStr(1) = 'dictdumpfile' then
+    begin
+      if ParamCount <> 2 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunDictDumpFile(ParamStr(2));
+    end
+    else if ParamStr(1) = 'encode' then
+    begin
+      if ParamCount <> 3 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunEncode(ParamStr(2), ParamStr(3));
+    end
+    else if ParamStr(1) = 'render' then
+    begin
+      if ParamCount <> 3 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunRender(ParamStr(2), ParamStr(3));
+    end
+    else if ParamStr(1) = 'rendergdi' then
+    begin
+      if ParamCount <> 3 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunRenderGdi(ParamStr(2), ParamStr(3));
+    end
+    else if ParamStr(1) = 'runscript' then
+    begin
+      if ParamCount <> 2 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunScript(ParamStr(2));
+    end
+    else if ParamStr(1) = 'tokendumpfile' then
+    begin
+      if ParamCount <> 3 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunTokenDumpFile(ParamStr(2), ParamStr(3));
+    end
+    else if ParamStr(1) = 'decodedump' then
+    begin
+      if ParamCount <> 3 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunDecodeDump(ParamStr(2), ParamStr(3));
+    end
+    else if (ParamStr(1) = 'decode') or (ParamStr(1) = 'bintokendump') then
+    begin
+      if ParamCount <> 2 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunDecodeCommand(ParamStr(1), ParamStr(2));
+    end
+    else if ParamStr(1) = 'bindump' then
+    begin
+      if ParamCount <> 2 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunBinDump(ParamStr(2));
+    end
+    else if ParamStr(1) = 'bindumpfile' then
+    begin
+      if ParamCount <> 3 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunBinDumpFile(ParamStr(2), ParamStr(3));
+    end
+    else
+    begin
+      if ParamCount <> 2 then
+      begin
+        Usage;
+        Halt(1);
+      end;
+      RunReadCommand(ParamStr(1), ParamStr(2));
+    end;
+  except
+    on E: Exception do
+    begin
+      WriteLn(StdErr, 'lhtc: ', E.Message);
+      Halt(1);
+    end;
+  end;
+end;
+
+end.

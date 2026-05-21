@@ -1,0 +1,28 @@
+<lhtml version=1>
+<head>
+  <title>Visual Box Test</title>
+  <meta name="description" content="Padding and border width rendering example">
+</head>
+
+<body font=sans,normal background=#F7F8FA color=#20242A>
+  <block background=#FFFFFF border=#445566 borderWidth=1 padding=8>
+    Default-ish box uses explicit single pixel border and compact padding.
+  </block>
+
+  <spacer height=12>
+
+  <block background=#E9F7EF border=green borderWidth=4 padding=18 color=#173B22>
+    Wider padding pushes text inward and a thicker border consumes outer box space.
+    <p>
+    Inline <span color=blue>runs</span> still inherit the same box geometry.
+  </block>
+
+  <spacer height=12>
+
+  <row>
+    <block width=170 background=#FFF4D6 border=yellow borderWidth=3 padding=10 color=#4A3A00>Warm compact panel.</block>
+    <spacer width=12>
+    <block width=210 background=#EEF2FF border=navy borderWidth=2 padding=14 color=#18254A>Cool panel with larger inner inset and wrapped text.</block>
+  </row>
+</body>
+</lhtml>

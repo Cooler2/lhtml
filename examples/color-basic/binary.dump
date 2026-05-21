@@ -1,0 +1,102 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 10 43 6F 6C 6F 72 20 42 61 73 69 63 20 54 65 73 74  INLINE_VALUE text "Color Basic Test"
+0029  00                  END
+002A  08                  element:meta
+002B  21                  attr:name
+002C  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+003A  22                  attr:content
+003B  03 84 2A 54 65 78 74 2C 20 62 61 63 6B 67 72 6F 75 6E 64 2C 20 61 6E 64 20 62 6F 72 64 65 72 20 63 6F 6C 6F 72 20 65 78 61 6D 70 6C 65  INLINE_VALUE string "Text, background, and border color example"
+0068  00                  END
+0069  02 04               COMMAND BODY_BEGIN
+006B  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+006F  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+0073  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+0077  01                  START
+0078  05                  element:body
+0079  27                  attr:fontFace
+007A  41                  value:TFontFace:sans
+007B  28                  attr:fontSize
+007C  46                  value:TFontSize:normal
+007D  2A                  attr:background
+007E  03 82 BE FF         INLINE_VALUE color #FFF6F6
+0082  29                  attr:color
+0083  03 82 25 21         INLINE_VALUE color #202429
+0087  01                  START
+0088  06                  element:block
+0089  2A                  attr:background
+008A  03 82 BF EF         INLINE_VALUE color #EEF6FF
+008E  2B                  attr:border
+008F  03 82 D9 44         INLINE_VALUE color #4199CD
+0093  29                  attr:color
+0094  03 82 90 01         INLINE_VALUE color #003083
+0098  03 85 36 41 20 73 6F 66 74 20 62 6C 75 65 20 62 6C 6F 63 6B 20 77 69 74 68 20 6E 61 76 79 20 74 65 78 74 20 61 6E 64 20 61 6E 20 52 47 42 35 36 35 20 62 6F 72 64 65 72 2E  INLINE_VALUE text "A soft blue block with navy text and an RGB565 border."
+00D1  09                  command:p
+00D2  03 85 19 49 6E 6C 69 6E 65 20 74 65 78 74 20 63 61 6E 20 73 77 69 74 63 68 20 74 6F  INLINE_VALUE text "Inline text can switch to"
+00EE  01                  START
+00EF  0B                  element:span
+00F0  29                  attr:color
+00F1  03 82 04 C1         INLINE_VALUE color #C52020
+00F5  03 85 03 72 65 64   INLINE_VALUE text "red"
+00FB  00                  END
+00FC  03 85 01 2C         INLINE_VALUE text ","
+0100  01                  START
+0101  0B                  element:span
+0102  29                  attr:color
+0103  03 82 48 2C         INLINE_VALUE color #298941
+0107  03 85 05 67 72 65 65 6E  INLINE_VALUE text "green"
+010F  00                  END
+0110  03 85 04 2C 20 6F 72  INLINE_VALUE text ", or"
+0117  01                  START
+0118  0B                  element:span
+0119  29                  attr:color
+011A  03 82 39 62         INLINE_VALUE color #6244CD
+011E  03 85 10 73 68 6F 72 74 20 68 65 78 20 70 75 72 70 6C 65  INLINE_VALUE text "short hex purple"
+0131  00                  END
+0132  03 85 01 2E         INLINE_VALUE text "."
+0136  00                  END
+0137  08                  element:spacer
+0138  25                  attr:height
+0139  04 0C               INLINE_BYTE 12
+013B  01                  START
+013C  07                  element:row
+013D  01                  START
+013E  06                  element:block
+013F  24                  attr:width
+0140  04 B4               INLINE_BYTE 180
+0142  2A                  attr:background
+0143  03 82 98 FF         INLINE_VALUE color #FFF2C5
+0147  2B                  attr:border
+0148  03 82 06 EE         INLINE_VALUE color #EEC231
+014C  29                  attr:color
+014D  03 82 C0 49         INLINE_VALUE color #4A3800
+0151  03 85 2B 57 61 72 6D 20 70 61 6E 65 6C 20 74 65 78 74 20 77 72 61 70 73 20 69 6E 73 69 64 65 20 61 20 63 6F 6C 6F 72 65 64 20 62 6F 78 2E  INLINE_VALUE text "Warm panel text wraps inside a colored box."
+017F  00                  END
+0180  08                  element:spacer
+0181  24                  attr:width
+0182  04 0C               INLINE_BYTE 12
+0184  01                  START
+0185  06                  element:block
+0186  24                  attr:width
+0187  04 DC               INLINE_BYTE 220
+0189  2A                  attr:background
+018A  03 82 9E F7         INLINE_VALUE color #F6F2F6
+018E  2B                  attr:border
+018F  03 82 10 84         INLINE_VALUE color #838183
+0193  29                  attr:color
+0194  03 82 86 31         INLINE_VALUE color #313031
+0198  03 85 48 41 20 6E 65 75 74 72 61 6C 20 70 61 6E 65 6C 20 6B 65 65 70 73 20 74 68 65 20 73 61 6D 65 20 6C 61 79 6F 75 74 20 70 61 74 68 20 62 75 74 20 64 69 66 66 65 72 65 6E 74 20 70 61 69 6E 74 20 63 6F 6D 6D 61 6E 64 73 2E  INLINE_VALUE text "A neutral panel keeps the same layout path but different paint commands."
+01E3  00                  END
+01E4  00                  END
+01E5  00                  END
+01E6  00                  END

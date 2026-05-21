@@ -1,0 +1,43 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Style Class Test"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Style stream class declarations"
+  END element:head
+  COMMAND STYLE_BEGIN
+    TEXT ".page { background=#F8FAFC; color=#20242A; fontFace=sans; fontSize=normal } .notice { background=#EEF7FF; border=#49C; borderWidth=2; padding=12; color=navy } .accent { color=red } .primary { width=180; background=#E9F7EF; border=green; borderWidth=2; padding=10 } .secondary { width=210; background=#F0F0F0; border=gray; borderWidth=1; padding=10 }"
+  END STYLE
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:class INLINE_VALUE string "page"
+    START element:block
+      ATTR attr:class INLINE_VALUE string "notice"
+      TEXT "Class declarations now come from the STYLE stream."
+      command:p
+      TEXT "Inline"
+      START element:span
+        ATTR attr:class INLINE_VALUE string "accent"
+        TEXT "accent text"
+      END element:span
+      TEXT "is resolved through the class map."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:row
+      START element:block
+        ATTR attr:class INLINE_VALUE string "primary"
+        TEXT "Primary action area."
+      END element:block
+      element:spacer
+        ATTR attr:width INLINE_BYTE 12
+      START element:block
+        ATTR attr:class INLINE_VALUE string "secondary"
+        TEXT "Secondary action area."
+      END element:block
+    END element:row
+  END element:body
+END element:lhtml

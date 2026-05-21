@@ -1,0 +1,56 @@
+<#document>
+  <lhtml version="1">
+    <head>
+      <title>
+        "Table Basic Test"
+      </title>
+      <meta name="description" content="Minimal table layout and rendering example">
+    </head>
+    <style>
+      ".page { background=#FFFAFF; color=#202429; fontFace=sans; fontSize=normal } .caption { background=#EEF6FF; border=#4199CD; borderWidth=2; padding=10; color=#003083 } .head { background=#EEF6EE; border=#209141; borderWidth=2; padding=8; fontSize=small } .cell { background=#FFFFFF; border=#838183; borderWidth=1; padding=8 } .warn { background=#FFF2C5; border=#EEC231; borderWidth=2; padding=8; color=#4A3800 }"
+    </style>
+    <body class="page">
+      <block class="caption">
+        "Tables use explicit cells. Each cell owns its own border and padding."
+      </block>
+      <spacer height="12">
+      <table width="520">
+        <col>
+        <col>
+        <col>
+        <tr class="head">
+          <td>
+            "Name"
+          </td>
+          <td>
+            "Status"
+          </td>
+          <td>
+            "Notes"
+          </td>
+        </tr>
+        <tr class="cell">
+          <td>
+            "Parser"
+          </td>
+          <td>
+            "Ready"
+          </td>
+          <td>
+            "Validation now rejects unsupported mini syntax."
+          </td>
+        </tr>
+        <tr class="cell">
+          <td>
+            "Renderer"
+          </td>
+          <td class="warn">
+            "Basic"
+          </td>
+          <td>
+            "Columns are equal width in this first slice."
+          </td>
+        </tr>
+      </table>
+    </body>
+  </lhtml>

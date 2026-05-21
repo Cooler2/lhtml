@@ -1,0 +1,43 @@
+<lhtml version=1>
+<head>
+  <title>Table Basic Test</title>
+  <meta name="description" content="Minimal table layout and rendering example">
+</head>
+
+<style>
+.page { background=#F8FAFC; color=#20242A; fontFace=sans; fontSize=normal }
+.caption { background=#EEF7FF; border=#49C; borderWidth=2; padding=10; color=navy }
+.head { background=#E9F7EF; border=green; borderWidth=2; padding=8; fontSize=small }
+.cell { background=#FFFFFF; border=gray; borderWidth=1; padding=8 }
+.warn { background=#FFF3C4; border=yellow; borderWidth=2; padding=8; color=#4A3A00 }
+</style>
+
+<body class=page>
+  <block class=caption>
+    Tables use explicit cells. Each cell owns its own border and padding.
+  </block>
+
+  <spacer height=12>
+
+  <table width=520>
+    <col>
+    <col>
+    <col>
+    <tr class=head>
+      <td>Name</td>
+      <td>Status</td>
+      <td>Notes</td>
+    </tr>
+    <tr class=cell>
+      <td>Parser</td>
+      <td>Ready</td>
+      <td>Validation now rejects unsupported mini syntax.</td>
+    </tr>
+    <tr class=cell>
+      <td>Renderer</td>
+      <td class=warn>Basic</td>
+      <td>Columns are equal width in this first slice.</td>
+    </tr>
+  </table>
+</body>
+</lhtml>

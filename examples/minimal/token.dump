@@ -1,0 +1,47 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Minimal LHT"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Small parser and round-trip test"
+  END element:head
+  COMMAND BODY_BEGIN
+  START element:body
+    START element:block
+      ATTR attr:id INLINE_VALUE string "intro"
+      TEXT "Minimal LHT document."
+      command:p
+      TEXT "It has text, a paragraph break, and a"
+      START element:span
+        ATTR attr:id INLINE_VALUE string "status"
+        TEXT "span"
+      END element:span
+      TEXT "."
+      command:br
+      TEXT "It also has a"
+      START element:a
+        ATTR attr:href INLINE_VALUE string "/docs"
+        TEXT "link"
+      END element:a
+      TEXT "."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 8
+    START element:row
+      ATTR attr:id INLINE_VALUE string "actions"
+      START element:block
+        ATTR attr:width INLINE_BYTE 120
+        TEXT "Left"
+      END element:block
+      element:spacer
+        ATTR attr:width INLINE_BYTE 8
+      START element:block
+        ATTR attr:width INLINE_BYTE 120
+        TEXT "Right"
+      END element:block
+    END element:row
+  END element:body
+END element:lhtml

@@ -1,0 +1,22 @@
+<lhtml version=1>
+<head>
+  <title>Color Basic Test</title>
+  <meta name="description" content="Text, background, and border color example">
+</head>
+
+<body font=sans,normal background=#F8F7F1 color=#20242A>
+  <block background=#EAF4FF border=#49C color=navy>
+    A soft blue block with navy text and an RGB565 border.
+    <p>
+    Inline text can switch to <span color=red>red</span>, <span color=#298A46>green</span>, or <span color=#64C>short hex purple</span>.
+  </block>
+
+  <spacer height=12>
+
+  <row>
+    <block width=180 background=#FFF3C4 border=yellow color=#4A3A00>Warm panel text wraps inside a colored box.</block>
+    <spacer width=12>
+    <block width=220 background=#F0F0F0 border=gray color=#303030>A neutral panel keeps the same layout path but different paint commands.</block>
+  </row>
+</body>
+</lhtml>

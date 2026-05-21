@@ -1,0 +1,114 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 10 43 6C 61 73 73 20 42 61 73 69 63 20 54 65 73 74  INLINE_VALUE text "Class Basic Test"
+0029  00                  END
+002A  08                  element:meta
+002B  21                  attr:name
+002C  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+003A  22                  attr:content
+003B  03 84 32 43 6C 61 73 73 20 61 74 74 72 69 62 75 74 65 20 72 6F 75 6E 64 2D 74 72 69 70 20 61 6E 64 20 72 65 73 6F 6C 76 65 72 20 67 72 6F 75 6E 64 77 6F 72 6B  INLINE_VALUE string "Class attribute round-trip and resolver groundwork"
+0070  00                  END
+0071  02 04               COMMAND BODY_BEGIN
+0073  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+0077  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+007B  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+007F  01                  START
+0080  05                  element:body
+0081  2E                  attr:class
+0082  03 84 04 70 61 67 65  INLINE_VALUE string "page"
+0089  27                  attr:fontFace
+008A  41                  value:TFontFace:sans
+008B  28                  attr:fontSize
+008C  46                  value:TFontSize:normal
+008D  2A                  attr:background
+008E  03 82 DF FF         INLINE_VALUE color #FFFAFF
+0092  29                  attr:color
+0093  03 82 25 21         INLINE_VALUE color #202429
+0097  01                  START
+0098  06                  element:block
+0099  2E                  attr:class
+009A  03 84 06 6E 6F 74 69 63 65  INLINE_VALUE string "notice"
+00A3  2A                  attr:background
+00A4  03 82 BF EF         INLINE_VALUE color #EEF6FF
+00A8  2B                  attr:border
+00A9  03 82 D9 44         INLINE_VALUE color #4199CD
+00AD  2D                  attr:borderWidth
+00AE  04 02               INLINE_BYTE 2
+00B0  2C                  attr:padding
+00B1  04 0C               INLINE_BYTE 12
+00B3  29                  attr:color
+00B4  03 82 90 01         INLINE_VALUE color #003083
+00B8  03 85 53 43 6C 61 73 73 20 6E 61 6D 65 73 20 61 72 65 20 70 72 65 73 65 72 76 65 64 20 6F 6E 20 62 6C 6F 63 6B 73 20 77 68 69 6C 65 20 69 6E 6C 69 6E 65 20 61 74 74 72 69 62 75 74 65 73 20 73 74 69 6C 6C 20 64 72 69 76 65 20 74 68 69 73 20 73 6C 69 63 65 2E  INLINE_VALUE text "Class names are preserved on blocks while inline attributes still drive this slice."
+010E  09                  command:p
+010F  2E                  attr:class
+0110  03 84 09 70 61 72 61 67 72 61 70 68  INLINE_VALUE string "paragraph"
+011C  03 85 06 49 6E 6C 69 6E 65  INLINE_VALUE text "Inline"
+0125  01                  START
+0126  0B                  element:span
+0127  2E                  attr:class
+0128  03 84 06 61 63 63 65 6E 74  INLINE_VALUE string "accent"
+0131  29                  attr:color
+0132  03 82 04 C1         INLINE_VALUE color #C52020
+0136  03 85 0D 63 6C 61 73 73 65 64 20 73 70 61 6E 73  INLINE_VALUE text "classed spans"
+0146  00                  END
+0147  03 85 34 6B 65 65 70 20 74 68 65 69 72 20 69 64 65 6E 74 69 74 79 20 66 6F 72 20 74 68 65 20 75 70 63 6F 6D 69 6E 67 20 73 74 79 6C 65 20 72 65 73 6F 6C 76 65 72 2E  INLINE_VALUE text "keep their identity for the upcoming style resolver."
+017E  00                  END
+017F  08                  element:spacer
+0180  2E                  attr:class
+0181  03 84 03 67 61 70   INLINE_VALUE string "gap"
+0187  25                  attr:height
+0188  04 0C               INLINE_BYTE 12
+018A  01                  START
+018B  07                  element:row
+018C  2E                  attr:class
+018D  03 84 07 61 63 74 69 6F 6E 73  INLINE_VALUE string "actions"
+0197  01                  START
+0198  06                  element:block
+0199  2E                  attr:class
+019A  03 84 07 70 72 69 6D 61 72 79  INLINE_VALUE string "primary"
+01A4  24                  attr:width
+01A5  04 B4               INLINE_BYTE 180
+01A7  2A                  attr:background
+01A8  03 82 BD EF         INLINE_VALUE color #EEF6EE
+01AC  2B                  attr:border
+01AD  03 82 88 24         INLINE_VALUE color #209141
+01B1  2D                  attr:borderWidth
+01B2  04 02               INLINE_BYTE 2
+01B4  2C                  attr:padding
+01B5  04 0A               INLINE_BYTE 10
+01B7  03 85 14 50 72 69 6D 61 72 79 20 61 63 74 69 6F 6E 20 61 72 65 61 2E  INLINE_VALUE text "Primary action area."
+01CE  00                  END
+01CF  08                  element:spacer
+01D0  2E                  attr:class
+01D1  03 84 06 67 75 74 74 65 72  INLINE_VALUE string "gutter"
+01DA  24                  attr:width
+01DB  04 0C               INLINE_BYTE 12
+01DD  01                  START
+01DE  06                  element:block
+01DF  2E                  attr:class
+01E0  03 84 09 73 65 63 6F 6E 64 61 72 79  INLINE_VALUE string "secondary"
+01EC  24                  attr:width
+01ED  04 D2               INLINE_BYTE 210
+01EF  2A                  attr:background
+01F0  03 82 9E F7         INLINE_VALUE color #F6F2F6
+01F4  2B                  attr:border
+01F5  03 82 10 84         INLINE_VALUE color #838183
+01F9  2D                  attr:borderWidth
+01FA  04 01               INLINE_BYTE 1
+01FC  2C                  attr:padding
+01FD  04 0A               INLINE_BYTE 10
+01FF  03 85 16 53 65 63 6F 6E 64 61 72 79 20 61 63 74 69 6F 6E 20 61 72 65 61 2E  INLINE_VALUE text "Secondary action area."
+0218  00                  END
+0219  00                  END
+021A  00                  END
+021B  00                  END

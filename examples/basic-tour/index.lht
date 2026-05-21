@@ -1,0 +1,196 @@
+<lhtml version=1>
+<head>
+  <title>LHT Basic Tour</title>
+  <meta name="description" content="A compact LHT document demonstrating core features"/>
+</head>
+
+<style>
+  @resource ui-atlas gif "/assets/ui-basic.gif" required;
+  @imageDef logo      src=ui-atlas crop="0,0,96,24";
+  @imageDef ok-icon   src=ui-atlas crop="0,24,12,12";
+  @imageDef warn-icon src=ui-atlas crop="12,24,12,12" tint=#D09020;
+
+  const primary    = #2F6F9F;
+  const accent     = #8A4F9F;
+  const panelBg    = #F4F7FA;
+  const softLine   = #B8C4D0;
+  const gap        = 8;
+
+  .page {
+    padding: 12;
+    font: default-sans-12;
+    color: systemText;
+    bgColor: systemWindow;
+  }
+
+  .hero {
+    padding: 12;
+    bgColor: panelBg;
+    border: 1, softLine;
+  }
+
+  .title { font: default-heading-24; color: primary; bold: true; }
+  .muted { color: #66717D; }
+  .good  { color: #207A3A; }
+  .warn  { color: #9A5A00; }
+
+  .chip {
+    padding: 3 7;
+    bgColor: #E7EEF6;
+    border: 1, #CAD6E2;
+  }
+
+  .button {
+    padding: 4 10;
+    bgColor: systemButtonFace;
+    color: systemButtonText;
+    border: 1, #808890;
+  }
+
+  .button:hover  { bgColor: #DDEBFF; }
+  .button:active { bgColor: #BCD7F0; }
+
+  .input {
+    padding: 4;
+    bgColor: #FFFFFF;
+    border: 1, #9AA8B6;
+  }
+
+  .cellHead {
+    bgColor: primary;
+    color: #FFFFFF;
+    bold: true;
+    padding: 4;
+  }
+
+  .cell {
+    padding: 4;
+    borderBottom: 1, #D5DEE8;
+  }
+</style>
+
+<body class="page">
+  <block class="hero">
+    <row>
+      <img name="logo" width=96 height=24 alt="LHT"/>
+      <spacer width=12/>
+      <block width=fill>
+        <block class="title">LHT Basic Tour</block>
+        <block class="muted">
+          A small document with layout, text, images, a table, events, and storage.
+        </block>
+      </block>
+    </row>
+  </block>
+
+  <spacer height=12/>
+
+  <row>
+    <block width=176 class="hero">
+      <h2>Navigation</h2>
+      <ul>
+        <li><a href="/docs/start">Getting started</a></li>
+        <li><a href="/docs/layout">Layout</a></li>
+        <li><a href="/docs/script">Scripting</a></li>
+      </ul>
+    </block>
+
+    <spacer width=12/>
+
+    <block width=fill>
+      <h1>Readable hypertext</h1>
+      <block>
+        Text can contain <b>bold</b>, <i>italic</i>, <u>underlined</u>,
+        and <span class="warn"><img name="warn-icon" width=12 height=12/> highlighted</span>
+        inline runs.
+        <p>
+        Inline images are atoms in the text flow:
+        <img name="ok-icon" width=12 height=12/> ready.
+        <p indent=1>
+        Paragraph breaks are commands, not containers; this line starts an indented paragraph.
+      </block>
+
+      <flow>
+        <block class="chip" width=96>block</block>
+        <block class="chip" width=96>row</block>
+        <block class="chip" width=96>flow</block>
+        <block class="chip" width=96>table</block>
+        <block class="chip" width=96>canvas</block>
+      </flow>
+    </block>
+  </row>
+
+  <spacer height=12/>
+
+  <table width=fill internalHBorders=1>
+    <col width=128/>
+    <col width=fill/>
+    <tr>
+      <td class="cellHead">Feature</td>
+      <td class="cellHead">Shown here</td>
+    </tr>
+    <tr>
+      <td class="cell">Styles</td>
+      <td class="cell">Constants, classes, hover and active state variants</td>
+    </tr>
+    <tr>
+      <td class="cell">Resources</td>
+      <td class="cell">Atlas resource with cropped logical images</td>
+    </tr>
+    <tr>
+      <td class="cell">Script</td>
+      <td class="cell">Button handler, storage, and document-level onError</td>
+    </tr>
+  </table>
+
+  <spacer height=12/>
+
+  <block class="hero">
+    <block><b>Try the tiny interaction:</b></block>
+    <row>
+      <input id="name" class="input" width=180 placeholder="Your name" onChange=saveDraft/>
+      <spacer width=8/>
+      <button class="button" onClick=greet>Greet</button>
+    </row>
+    <spacer height=8/>
+    <block>Status: <span id="status" class="good">ready</span></block>
+  </block>
+</body>
+
+<script>
+function setStatus(text) {
+  let s = getElement("status");
+  if (s != null) s.text = text;
+}
+
+function saveDraft(e) {
+  let name = getElement("name");
+  if (name != null) storage.set("basic.name", name.text);
+}
+
+function greet(e) {
+  let name = getElement("name");
+  if (name == null) return;
+
+  if (name.text == "") {
+    setStatus("enter a name first");
+    return;
+  }
+
+  storage.set("basic.name", name.text);
+  setStatus("hello, " + name.text);
+}
+
+document.on("rendered", func(e) {
+  let saved = storage.get("basic.name");
+  if (saved != null) {
+    let name = getElement("name");
+    if (name != null) name.text = saved;
+  }
+});
+
+document.on("error", func(e) {
+  setStatus("script error: " + e.code);
+});
+</script>
+</lhtml>

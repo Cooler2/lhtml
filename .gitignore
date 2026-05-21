@@ -1,0 +1,5 @@
+tmp/
+*.o
+*.ppu
+*.exe
+.claude/settings.local.json

@@ -1,0 +1,40 @@
+<lhtml version=1>
+<head>
+  <title>Layout Row Test</title>
+  <meta name="description" content="Focused row and block layout example">
+</head>
+
+<body>
+  <block>
+    Full width block before rows. It should wrap inside the available page width and leave enough room around the text.
+  </block>
+
+  <spacer height=12>
+
+  <row id="top-row">
+    <block width=160>Left column with wrapped text inside a fixed width block.</block>
+    <spacer width=12>
+    <block width=220>Middle column. It is wider and should need fewer line breaks.</block>
+    <spacer width=12>
+    <block width=160>Right column.</block>
+  </row>
+
+  <spacer height=16>
+
+  <row id="button-row">
+    <block width=96>Back</block>
+    <spacer width=8>
+    <block width=128>Continue</block>
+    <spacer width=8>
+    <block width=96>Cancel</block>
+  </row>
+
+  <spacer height=16>
+
+  <block width=240>
+    Narrow block forces wrapping and gives the renderer a useful text measurement test.
+    <p>
+    The next pass should replace this debug font with a real font interface.
+  </block>
+</body>
+</lhtml>

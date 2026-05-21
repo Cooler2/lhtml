@@ -1,0 +1,53 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Font Basic Test"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Semantic font family and size example"
+  END element:head
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:fontFace TOKEN value:TFontFace:sans
+    ATTR attr:fontSize TOKEN value:TFontSize:normal
+    START element:block
+      ATTR attr:fontSize TOKEN value:TFontSize:large
+      TEXT "Large heading-like text."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:block
+      TEXT "Normal sans text with a"
+      START element:span
+        ATTR attr:fontSize TOKEN value:TFontSize:small
+        TEXT "small inline span"
+      END element:span
+      TEXT "and a"
+      START element:span
+        ATTR attr:fontSize TOKEN value:TFontSize:xlarge
+        TEXT "large inline span"
+      END element:span
+      TEXT "."
+    END element:block
+    element:spacer
+      ATTR attr:height INLINE_BYTE 12
+    START element:row
+      START element:block
+        ATTR attr:width INLINE_BYTE 180
+        ATTR attr:fontFace TOKEN value:TFontFace:mono
+        ATTR attr:fontSize TOKEN value:TFontSize:small
+        TEXT "Mono small text should be compact and wrap later."
+      END element:block
+      element:spacer
+        ATTR attr:width INLINE_BYTE 12
+      START element:block
+        ATTR attr:width INLINE_BYTE 220
+        ATTR attr:fontFace TOKEN value:TFontFace:serif
+        ATTR attr:fontSize TOKEN value:TFontSize:normal
+        TEXT "Serif normal maps to the current debug font for now, but keeps the semantic value."
+      END element:block
+    END element:row
+  END element:body
+END element:lhtml

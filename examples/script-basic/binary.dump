@@ -1,0 +1,465 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 0C 53 63 72 69 70 74 20 62 61 73 69 63  INLINE_VALUE text "Script basic"
+0025  00                  END
+0026  08                  element:meta
+0027  21                  attr:name
+0028  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+0036  22                  attr:content
+0037  03 84 20 4D 69 6E 69 6D 61 6C 20 4C 4A 53 20 74 6F 6B 65 6E 20 73 74 72 65 61 6D 20 65 78 61 6D 70 6C 65  INLINE_VALUE string "Minimal LJS token stream example"
+005A  00                  END
+005B  02 06               COMMAND SCRIPT_BEGIN
+005D  02 00 06 1E         COMMAND IMPORT dict=6 count=30 ; LJS in SCRIPT
+0061  05                  LJS kw:let
+0062  1F                  LJS literal:identifier
+0063  03 84 04 65 78 70 72  INLINE_VALUE string "expr"
+006A  0C                  LJS op:=
+006B  31                  LJS literal:number
+006C  03 84 01 32         INLINE_VALUE string "2"
+0070  0D                  LJS op:+
+0071  31                  LJS literal:number
+0072  03 84 01 33         INLINE_VALUE string "3"
+0076  0F                  LJS op:*
+0077  31                  LJS literal:number
+0078  03 84 01 34         INLINE_VALUE string "4"
+007C  1B                  LJS punct:;
+007D  1F                  LJS literal:identifier
+007E  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0086  34                  LJS punct:.
+0087  1F                  LJS literal:identifier
+0088  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+008E  17                  LJS punct:(
+008F  1F                  LJS literal:identifier
+0090  03 84 04 65 78 70 72  INLINE_VALUE string "expr"
+0097  18                  LJS punct:)
+0098  1B                  LJS punct:;
+0099  1F                  LJS literal:identifier
+009A  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+00A2  34                  LJS punct:.
+00A3  1F                  LJS literal:identifier
+00A4  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+00AA  17                  LJS punct:(
+00AB  17                  LJS punct:(
+00AC  31                  LJS literal:number
+00AD  03 84 01 32         INLINE_VALUE string "2"
+00B1  0D                  LJS op:+
+00B2  31                  LJS literal:number
+00B3  03 84 01 33         INLINE_VALUE string "3"
+00B7  18                  LJS punct:)
+00B8  0F                  LJS op:*
+00B9  31                  LJS literal:number
+00BA  03 84 01 34         INLINE_VALUE string "4"
+00BE  18                  LJS punct:)
+00BF  1B                  LJS punct:;
+00C0  1F                  LJS literal:identifier
+00C1  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+00C9  34                  LJS punct:.
+00CA  1F                  LJS literal:identifier
+00CB  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+00D1  17                  LJS punct:(
+00D2  31                  LJS literal:number
+00D3  03 84 02 31 30      INLINE_VALUE string "10"
+00D8  10                  LJS op:/
+00D9  31                  LJS literal:number
+00DA  03 84 01 32         INLINE_VALUE string "2"
+00DE  0D                  LJS op:+
+00DF  31                  LJS literal:number
+00E0  03 84 01 31         INLINE_VALUE string "1"
+00E4  18                  LJS punct:)
+00E5  1B                  LJS punct:;
+00E6  1F                  LJS literal:identifier
+00E7  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+00EF  34                  LJS punct:.
+00F0  1F                  LJS literal:identifier
+00F1  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+00F7  17                  LJS punct:(
+00F8  31                  LJS literal:number
+00F9  03 84 01 33         INLINE_VALUE string "3"
+00FD  0F                  LJS op:*
+00FE  31                  LJS literal:number
+00FF  03 84 01 33         INLINE_VALUE string "3"
+0103  11                  LJS op:==
+0104  31                  LJS literal:number
+0105  03 84 01 39         INLINE_VALUE string "9"
+0109  18                  LJS punct:)
+010A  1B                  LJS punct:;
+010B  1F                  LJS literal:identifier
+010C  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0114  34                  LJS punct:.
+0115  1F                  LJS literal:identifier
+0116  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+011C  17                  LJS punct:(
+011D  17                  LJS punct:(
+011E  31                  LJS literal:number
+011F  03 84 01 32         INLINE_VALUE string "2"
+0123  0D                  LJS op:+
+0124  31                  LJS literal:number
+0125  03 84 01 33         INLINE_VALUE string "3"
+0129  18                  LJS punct:)
+012A  0F                  LJS op:*
+012B  31                  LJS literal:number
+012C  03 84 01 34         INLINE_VALUE string "4"
+0130  16                  LJS op:>=
+0131  31                  LJS literal:number
+0132  03 84 02 32 30      INLINE_VALUE string "20"
+0137  18                  LJS punct:)
+0138  1B                  LJS punct:;
+0139  1F                  LJS literal:identifier
+013A  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0142  34                  LJS punct:.
+0143  1F                  LJS literal:identifier
+0144  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+014A  17                  LJS punct:(
+014B  0B                  LJS kw:null
+014C  11                  LJS op:==
+014D  0B                  LJS kw:null
+014E  18                  LJS punct:)
+014F  1B                  LJS punct:;
+0150  32                  LJS kw:function
+0151  1F                  LJS literal:identifier
+0152  03 84 03 61 64 64   INLINE_VALUE string "add"
+0158  17                  LJS punct:(
+0159  1F                  LJS literal:identifier
+015A  03 84 01 61         INLINE_VALUE string "a"
+015E  1C                  LJS punct:,
+015F  1F                  LJS literal:identifier
+0160  03 84 01 62         INLINE_VALUE string "b"
+0164  18                  LJS punct:)
+0165  01                  LJS START
+0166  33                  LJS kw:return
+0167  1F                  LJS literal:identifier
+0168  03 84 01 61         INLINE_VALUE string "a"
+016C  0D                  LJS op:+
+016D  1F                  LJS literal:identifier
+016E  03 84 01 62         INLINE_VALUE string "b"
+0172  1B                  LJS punct:;
+0173  00                  LJS END
+0174  1F                  LJS literal:identifier
+0175  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+017D  34                  LJS punct:.
+017E  1F                  LJS literal:identifier
+017F  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0185  17                  LJS punct:(
+0186  1F                  LJS literal:identifier
+0187  03 84 03 61 64 64   INLINE_VALUE string "add"
+018D  17                  LJS punct:(
+018E  31                  LJS literal:number
+018F  03 84 01 35         INLINE_VALUE string "5"
+0193  1C                  LJS punct:,
+0194  31                  LJS literal:number
+0195  03 84 01 37         INLINE_VALUE string "7"
+0199  18                  LJS punct:)
+019A  18                  LJS punct:)
+019B  1B                  LJS punct:;
+019C  05                  LJS kw:let
+019D  1F                  LJS literal:identifier
+019E  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+01A8  0C                  LJS op:=
+01A9  31                  LJS literal:number
+01AA  03 84 03 31 30 30   INLINE_VALUE string "100"
+01B0  1B                  LJS punct:;
+01B1  32                  LJS kw:function
+01B2  1F                  LJS literal:identifier
+01B3  03 84 0B 6C 6F 63 61 6C 53 68 61 64 6F 77  INLINE_VALUE string "localShadow"
+01C1  17                  LJS punct:(
+01C2  1F                  LJS literal:identifier
+01C3  03 84 05 76 61 6C 75 65  INLINE_VALUE string "value"
+01CB  18                  LJS punct:)
+01CC  01                  LJS START
+01CD  05                  LJS kw:let
+01CE  1F                  LJS literal:identifier
+01CF  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+01D9  0C                  LJS op:=
+01DA  1F                  LJS literal:identifier
+01DB  03 84 05 76 61 6C 75 65  INLINE_VALUE string "value"
+01E3  0D                  LJS op:+
+01E4  31                  LJS literal:number
+01E5  03 84 01 31         INLINE_VALUE string "1"
+01E9  1B                  LJS punct:;
+01EA  33                  LJS kw:return
+01EB  1F                  LJS literal:identifier
+01EC  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+01F6  1B                  LJS punct:;
+01F7  00                  LJS END
+01F8  1F                  LJS literal:identifier
+01F9  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0201  34                  LJS punct:.
+0202  1F                  LJS literal:identifier
+0203  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0209  17                  LJS punct:(
+020A  1F                  LJS literal:identifier
+020B  03 84 0B 6C 6F 63 61 6C 53 68 61 64 6F 77  INLINE_VALUE string "localShadow"
+0219  17                  LJS punct:(
+021A  31                  LJS literal:number
+021B  03 84 01 34         INLINE_VALUE string "4"
+021F  18                  LJS punct:)
+0220  18                  LJS punct:)
+0221  1B                  LJS punct:;
+0222  1F                  LJS literal:identifier
+0223  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+022B  34                  LJS punct:.
+022C  1F                  LJS literal:identifier
+022D  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0233  17                  LJS punct:(
+0234  1F                  LJS literal:identifier
+0235  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+023F  18                  LJS punct:)
+0240  1B                  LJS punct:;
+0241  32                  LJS kw:function
+0242  1F                  LJS literal:identifier
+0243  03 84 0B 70 61 72 61 6D 53 68 61 64 6F 77  INLINE_VALUE string "paramShadow"
+0251  17                  LJS punct:(
+0252  1F                  LJS literal:identifier
+0253  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+025D  18                  LJS punct:)
+025E  01                  LJS START
+025F  33                  LJS kw:return
+0260  1F                  LJS literal:identifier
+0261  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+026B  0D                  LJS op:+
+026C  31                  LJS literal:number
+026D  03 84 01 32         INLINE_VALUE string "2"
+0271  1B                  LJS punct:;
+0272  00                  LJS END
+0273  1F                  LJS literal:identifier
+0274  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+027C  34                  LJS punct:.
+027D  1F                  LJS literal:identifier
+027E  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0284  17                  LJS punct:(
+0285  1F                  LJS literal:identifier
+0286  03 84 0B 70 61 72 61 6D 53 68 61 64 6F 77  INLINE_VALUE string "paramShadow"
+0294  17                  LJS punct:(
+0295  31                  LJS literal:number
+0296  03 84 01 35         INLINE_VALUE string "5"
+029A  18                  LJS punct:)
+029B  18                  LJS punct:)
+029C  1B                  LJS punct:;
+029D  1F                  LJS literal:identifier
+029E  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+02A6  34                  LJS punct:.
+02A7  1F                  LJS literal:identifier
+02A8  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+02AE  17                  LJS punct:(
+02AF  1F                  LJS literal:identifier
+02B0  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+02BA  18                  LJS punct:)
+02BB  1B                  LJS punct:;
+02BC  06                  LJS kw:if
+02BD  17                  LJS punct:(
+02BE  1F                  LJS literal:identifier
+02BF  03 84 03 61 64 64   INLINE_VALUE string "add"
+02C5  17                  LJS punct:(
+02C6  31                  LJS literal:number
+02C7  03 84 01 31         INLINE_VALUE string "1"
+02CB  1C                  LJS punct:,
+02CC  31                  LJS literal:number
+02CD  03 84 01 32         INLINE_VALUE string "2"
+02D1  18                  LJS punct:)
+02D2  11                  LJS op:==
+02D3  31                  LJS literal:number
+02D4  03 84 01 33         INLINE_VALUE string "3"
+02D8  18                  LJS punct:)
+02D9  01                  LJS START
+02DA  1F                  LJS literal:identifier
+02DB  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+02E3  34                  LJS punct:.
+02E4  1F                  LJS literal:identifier
+02E5  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+02EB  17                  LJS punct:(
+02EC  30                  LJS literal:string
+02ED  03 84 07 69 66 2D 74 72 75 65  INLINE_VALUE string "if-true"
+02F7  18                  LJS punct:)
+02F8  1B                  LJS punct:;
+02F9  00                  LJS END
+02FA  07                  LJS kw:else
+02FB  01                  LJS START
+02FC  1F                  LJS literal:identifier
+02FD  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0305  34                  LJS punct:.
+0306  1F                  LJS literal:identifier
+0307  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+030D  17                  LJS punct:(
+030E  30                  LJS literal:string
+030F  03 84 06 69 66 2D 62 61 64  INLINE_VALUE string "if-bad"
+0318  18                  LJS punct:)
+0319  1B                  LJS punct:;
+031A  00                  LJS END
+031B  06                  LJS kw:if
+031C  17                  LJS punct:(
+031D  1F                  LJS literal:identifier
+031E  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+0328  13                  LJS op:<
+0329  31                  LJS literal:number
+032A  03 84 02 31 30      INLINE_VALUE string "10"
+032F  18                  LJS punct:)
+0330  01                  LJS START
+0331  1F                  LJS literal:identifier
+0332  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+033A  34                  LJS punct:.
+033B  1F                  LJS literal:identifier
+033C  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0342  17                  LJS punct:(
+0343  30                  LJS literal:string
+0344  03 84 06 69 66 2D 62 61 64  INLINE_VALUE string "if-bad"
+034D  18                  LJS punct:)
+034E  1B                  LJS punct:;
+034F  00                  LJS END
+0350  07                  LJS kw:else
+0351  01                  LJS START
+0352  1F                  LJS literal:identifier
+0353  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+035B  34                  LJS punct:.
+035C  1F                  LJS literal:identifier
+035D  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0363  17                  LJS punct:(
+0364  30                  LJS literal:string
+0365  03 84 09 65 6C 73 65 2D 74 72 75 65  INLINE_VALUE string "else-true"
+0371  18                  LJS punct:)
+0372  1B                  LJS punct:;
+0373  00                  LJS END
+0374  06                  LJS kw:if
+0375  17                  LJS punct:(
+0376  1F                  LJS literal:identifier
+0377  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+0381  11                  LJS op:==
+0382  31                  LJS literal:number
+0383  03 84 03 31 30 30   INLINE_VALUE string "100"
+0389  18                  LJS punct:)
+038A  1F                  LJS literal:identifier
+038B  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0393  34                  LJS punct:.
+0394  1F                  LJS literal:identifier
+0395  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+039B  17                  LJS punct:(
+039C  30                  LJS literal:string
+039D  03 84 09 69 66 2D 73 69 6E 67 6C 65  INLINE_VALUE string "if-single"
+03A9  18                  LJS punct:)
+03AA  1B                  LJS punct:;
+03AB  06                  LJS kw:if
+03AC  17                  LJS punct:(
+03AD  1F                  LJS literal:identifier
+03AE  03 84 07 6F 75 74 73 69 64 65  INLINE_VALUE string "outside"
+03B8  13                  LJS op:<
+03B9  31                  LJS literal:number
+03BA  03 84 02 31 30      INLINE_VALUE string "10"
+03BF  18                  LJS punct:)
+03C0  1F                  LJS literal:identifier
+03C1  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+03C9  34                  LJS punct:.
+03CA  1F                  LJS literal:identifier
+03CB  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+03D1  17                  LJS punct:(
+03D2  30                  LJS literal:string
+03D3  03 84 0D 69 66 2D 73 69 6E 67 6C 65 2D 62 61 64  INLINE_VALUE string "if-single-bad"
+03E3  18                  LJS punct:)
+03E4  1B                  LJS punct:;
+03E5  05                  LJS kw:let
+03E6  1F                  LJS literal:identifier
+03E7  03 84 06 73 69 6E 67 6C 65  INLINE_VALUE string "single"
+03F0  0C                  LJS op:=
+03F1  31                  LJS literal:number
+03F2  03 84 01 30         INLINE_VALUE string "0"
+03F6  1B                  LJS punct:;
+03F7  08                  LJS kw:while
+03F8  17                  LJS punct:(
+03F9  1F                  LJS literal:identifier
+03FA  03 84 06 73 69 6E 67 6C 65  INLINE_VALUE string "single"
+0403  13                  LJS op:<
+0404  31                  LJS literal:number
+0405  03 84 01 32         INLINE_VALUE string "2"
+0409  18                  LJS punct:)
+040A  1F                  LJS literal:identifier
+040B  03 84 06 73 69 6E 67 6C 65  INLINE_VALUE string "single"
+0414  0C                  LJS op:=
+0415  1F                  LJS literal:identifier
+0416  03 84 06 73 69 6E 67 6C 65  INLINE_VALUE string "single"
+041F  0D                  LJS op:+
+0420  31                  LJS literal:number
+0421  03 84 01 31         INLINE_VALUE string "1"
+0425  1B                  LJS punct:;
+0426  1F                  LJS literal:identifier
+0427  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+042F  34                  LJS punct:.
+0430  1F                  LJS literal:identifier
+0431  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0437  17                  LJS punct:(
+0438  1F                  LJS literal:identifier
+0439  03 84 06 73 69 6E 67 6C 65  INLINE_VALUE string "single"
+0442  18                  LJS punct:)
+0443  1B                  LJS punct:;
+0444  05                  LJS kw:let
+0445  1F                  LJS literal:identifier
+0446  03 84 01 78         INLINE_VALUE string "x"
+044A  0C                  LJS op:=
+044B  31                  LJS literal:number
+044C  03 84 01 31         INLINE_VALUE string "1"
+0450  1B                  LJS punct:;
+0451  08                  LJS kw:while
+0452  17                  LJS punct:(
+0453  1F                  LJS literal:identifier
+0454  03 84 01 78         INLINE_VALUE string "x"
+0458  13                  LJS op:<
+0459  31                  LJS literal:number
+045A  03 84 01 34         INLINE_VALUE string "4"
+045E  18                  LJS punct:)
+045F  01                  LJS START
+0460  1F                  LJS literal:identifier
+0461  03 84 05 44 65 62 75 67  INLINE_VALUE string "Debug"
+0469  34                  LJS punct:.
+046A  1F                  LJS literal:identifier
+046B  03 84 03 6C 6F 67   INLINE_VALUE string "log"
+0471  17                  LJS punct:(
+0472  1F                  LJS literal:identifier
+0473  03 84 01 78         INLINE_VALUE string "x"
+0477  18                  LJS punct:)
+0478  1B                  LJS punct:;
+0479  1F                  LJS literal:identifier
+047A  03 84 01 78         INLINE_VALUE string "x"
+047E  0C                  LJS op:=
+047F  1F                  LJS literal:identifier
+0480  03 84 01 78         INLINE_VALUE string "x"
+0484  0D                  LJS op:+
+0485  31                  LJS literal:number
+0486  03 84 01 31         INLINE_VALUE string "1"
+048A  1B                  LJS punct:;
+048B  00                  LJS END
+048C  1F                  LJS literal:identifier
+048D  03 84 07 42 72 6F 77 73 65 72  INLINE_VALUE string "Browser"
+0497  34                  LJS punct:.
+0498  1F                  LJS literal:identifier
+0499  03 84 05 61 6C 65 72 74  INLINE_VALUE string "alert"
+04A1  17                  LJS punct:(
+04A2  30                  LJS literal:string
+04A3  03 84 04 64 6F 6E 65  INLINE_VALUE string "done"
+04AA  18                  LJS punct:)
+04AB  1B                  LJS punct:;
+04AC  00                  END SCRIPT
+04AD  02 04               COMMAND BODY_BEGIN
+04AF  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+04B3  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+04B7  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+04BB  01                  START
+04BC  05                  element:body
+04BD  01                  START
+04BE  06                  element:block
+04BF  24                  attr:width
+04C0  03 80 A4 03         INLINE_VALUE uint 420
+04C4  27                  attr:fontFace
+04C5  41                  value:TFontFace:sans
+04C6  28                  attr:fontSize
+04C7  46                  value:TFontSize:normal
+04C8  03 85 1C 53 63 72 69 70 74 20 74 6F 6B 65 6E 20 73 74 72 65 61 6D 20 66 69 78 74 75 72 65 2E  INLINE_VALUE text "Script token stream fixture."
+04E7  00                  END
+04E8  00                  END
+04E9  00                  END

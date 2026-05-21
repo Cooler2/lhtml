@@ -1,0 +1,64 @@
+START element:lhtml
+  ATTR attr:version INLINE_BYTE 1
+  START element:head
+    START element:title
+      TEXT "Class Basic Test"
+    END element:title
+    element:meta
+      ATTR attr:name INLINE_VALUE string "description"
+      ATTR attr:content INLINE_VALUE string "Class attribute round-trip and resolver groundwork"
+  END element:head
+  COMMAND BODY_BEGIN
+  START element:body
+    ATTR attr:class INLINE_VALUE string "page"
+    ATTR attr:fontFace TOKEN value:TFontFace:sans
+    ATTR attr:fontSize TOKEN value:TFontSize:normal
+    ATTR attr:background INLINE_VALUE color "#F8FAFC"
+    ATTR attr:color INLINE_VALUE color "#20242A"
+    START element:block
+      ATTR attr:class INLINE_VALUE string "notice"
+      ATTR attr:background INLINE_VALUE color "#EEF7FF"
+      ATTR attr:border INLINE_VALUE color "#49C"
+      ATTR attr:borderWidth INLINE_BYTE 2
+      ATTR attr:padding INLINE_BYTE 12
+      ATTR attr:color INLINE_VALUE color "navy"
+      TEXT "Class names are preserved on blocks while inline attributes still drive this slice."
+      command:p
+        ATTR attr:class INLINE_VALUE string "paragraph"
+      TEXT "Inline"
+      START element:span
+        ATTR attr:class INLINE_VALUE string "accent"
+        ATTR attr:color INLINE_VALUE color "red"
+        TEXT "classed spans"
+      END element:span
+      TEXT "keep their identity for the upcoming style resolver."
+    END element:block
+    element:spacer
+      ATTR attr:class INLINE_VALUE string "gap"
+      ATTR attr:height INLINE_BYTE 12
+    START element:row
+      ATTR attr:class INLINE_VALUE string "actions"
+      START element:block
+        ATTR attr:class INLINE_VALUE string "primary"
+        ATTR attr:width INLINE_BYTE 180
+        ATTR attr:background INLINE_VALUE color "#E9F7EF"
+        ATTR attr:border INLINE_VALUE color "green"
+        ATTR attr:borderWidth INLINE_BYTE 2
+        ATTR attr:padding INLINE_BYTE 10
+        TEXT "Primary action area."
+      END element:block
+      element:spacer
+        ATTR attr:class INLINE_VALUE string "gutter"
+        ATTR attr:width INLINE_BYTE 12
+      START element:block
+        ATTR attr:class INLINE_VALUE string "secondary"
+        ATTR attr:width INLINE_BYTE 210
+        ATTR attr:background INLINE_VALUE color "#F0F0F0"
+        ATTR attr:border INLINE_VALUE color "gray"
+        ATTR attr:borderWidth INLINE_BYTE 1
+        ATTR attr:padding INLINE_BYTE 10
+        TEXT "Secondary action area."
+      END element:block
+    END element:row
+  END element:body
+END element:lhtml

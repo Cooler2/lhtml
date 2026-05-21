@@ -1,0 +1,189 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 10 54 61 62 6C 65 20 42 61 73 69 63 20 54 65 73 74  INLINE_VALUE text "Table Basic Test"
+0029  00                  END
+002A  08                  element:meta
+002B  21                  attr:name
+002C  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+003A  22                  attr:content
+003B  03 84 2A 4D 69 6E 69 6D 61 6C 20 74 61 62 6C 65 20 6C 61 79 6F 75 74 20 61 6E 64 20 72 65 6E 64 65 72 69 6E 67 20 65 78 61 6D 70 6C 65  INLINE_VALUE string "Minimal table layout and rendering example"
+0068  00                  END
+0069  02 05               COMMAND STYLE_BEGIN
+006B  02 00 03 02         COMMAND IMPORT dict=3 count=2 ; STYLE in STYLE
+006F  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in STYLE
+0073  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in STYLE
+0077  05                  command:classDecl
+0078  03 84 04 70 61 67 65  INLINE_VALUE string "page"
+007F  06                  command:set
+0080  2A                  attr:background
+0081  03 82 DF FF         INLINE_VALUE color #FFFAFF
+0085  06                  command:set
+0086  29                  attr:color
+0087  03 82 25 21         INLINE_VALUE color #202429
+008B  06                  command:set
+008C  27                  attr:fontFace
+008D  41                  value:TFontFace:sans
+008E  06                  command:set
+008F  28                  attr:fontSize
+0090  46                  value:TFontSize:normal
+0091  00                  END
+0092  05                  command:classDecl
+0093  03 84 07 63 61 70 74 69 6F 6E  INLINE_VALUE string "caption"
+009D  06                  command:set
+009E  2A                  attr:background
+009F  03 82 BF EF         INLINE_VALUE color #EEF6FF
+00A3  06                  command:set
+00A4  2B                  attr:border
+00A5  03 82 D9 44         INLINE_VALUE color #4199CD
+00A9  06                  command:set
+00AA  2D                  attr:borderWidth
+00AB  04 02               INLINE_BYTE 2
+00AD  06                  command:set
+00AE  2C                  attr:padding
+00AF  04 0A               INLINE_BYTE 10
+00B1  06                  command:set
+00B2  29                  attr:color
+00B3  03 82 90 01         INLINE_VALUE color #003083
+00B7  00                  END
+00B8  05                  command:classDecl
+00B9  03 84 04 68 65 61 64  INLINE_VALUE string "head"
+00C0  06                  command:set
+00C1  2A                  attr:background
+00C2  03 82 BD EF         INLINE_VALUE color #EEF6EE
+00C6  06                  command:set
+00C7  2B                  attr:border
+00C8  03 82 88 24         INLINE_VALUE color #209141
+00CC  06                  command:set
+00CD  2D                  attr:borderWidth
+00CE  04 02               INLINE_BYTE 2
+00D0  06                  command:set
+00D1  2C                  attr:padding
+00D2  04 08               INLINE_BYTE 8
+00D4  06                  command:set
+00D5  28                  attr:fontSize
+00D6  45                  value:TFontSize:small
+00D7  00                  END
+00D8  05                  command:classDecl
+00D9  03 84 04 63 65 6C 6C  INLINE_VALUE string "cell"
+00E0  06                  command:set
+00E1  2A                  attr:background
+00E2  03 82 FF FF         INLINE_VALUE color #FFFFFF
+00E6  06                  command:set
+00E7  2B                  attr:border
+00E8  03 82 10 84         INLINE_VALUE color #838183
+00EC  06                  command:set
+00ED  2D                  attr:borderWidth
+00EE  04 01               INLINE_BYTE 1
+00F0  06                  command:set
+00F1  2C                  attr:padding
+00F2  04 08               INLINE_BYTE 8
+00F4  00                  END
+00F5  05                  command:classDecl
+00F6  03 84 04 77 61 72 6E  INLINE_VALUE string "warn"
+00FD  06                  command:set
+00FE  2A                  attr:background
+00FF  03 82 98 FF         INLINE_VALUE color #FFF2C5
+0103  06                  command:set
+0104  2B                  attr:border
+0105  03 82 06 EE         INLINE_VALUE color #EEC231
+0109  06                  command:set
+010A  2D                  attr:borderWidth
+010B  04 02               INLINE_BYTE 2
+010D  06                  command:set
+010E  2C                  attr:padding
+010F  04 08               INLINE_BYTE 8
+0111  06                  command:set
+0112  29                  attr:color
+0113  03 82 C0 49         INLINE_VALUE color #4A3800
+0117  00                  END
+0118  00                  END
+0119  02 04               COMMAND BODY_BEGIN
+011B  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+011F  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+0123  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+0127  01                  START
+0128  05                  element:body
+0129  2E                  attr:class
+012A  03 84 04 70 61 67 65  INLINE_VALUE string "page"
+0131  01                  START
+0132  06                  element:block
+0133  2E                  attr:class
+0134  03 84 07 63 61 70 74 69 6F 6E  INLINE_VALUE string "caption"
+013E  03 85 45 54 61 62 6C 65 73 20 75 73 65 20 65 78 70 6C 69 63 69 74 20 63 65 6C 6C 73 2E 20 45 61 63 68 20 63 65 6C 6C 20 6F 77 6E 73 20 69 74 73 20 6F 77 6E 20 62 6F 72 64 65 72 20 61 6E 64 20 70 61 64 64 69 6E 67 2E  INLINE_VALUE text "Tables use explicit cells. Each cell owns its own border and padding."
+0186  00                  END
+0187  08                  element:spacer
+0188  25                  attr:height
+0189  04 0C               INLINE_BYTE 12
+018B  01                  START
+018C  0D                  element:table
+018D  24                  attr:width
+018E  03 80 88 04         INLINE_VALUE uint 520
+0192  0E                  element:col
+0193  0E                  element:col
+0194  0E                  element:col
+0195  01                  START
+0196  0F                  element:tr
+0197  2E                  attr:class
+0198  03 84 04 68 65 61 64  INLINE_VALUE string "head"
+019F  01                  START
+01A0  10                  element:td
+01A1  03 85 04 4E 61 6D 65  INLINE_VALUE text "Name"
+01A8  00                  END
+01A9  01                  START
+01AA  10                  element:td
+01AB  03 85 06 53 74 61 74 75 73  INLINE_VALUE text "Status"
+01B4  00                  END
+01B5  01                  START
+01B6  10                  element:td
+01B7  03 85 05 4E 6F 74 65 73  INLINE_VALUE text "Notes"
+01BF  00                  END
+01C0  00                  END
+01C1  01                  START
+01C2  0F                  element:tr
+01C3  2E                  attr:class
+01C4  03 84 04 63 65 6C 6C  INLINE_VALUE string "cell"
+01CB  01                  START
+01CC  10                  element:td
+01CD  03 85 06 50 61 72 73 65 72  INLINE_VALUE text "Parser"
+01D6  00                  END
+01D7  01                  START
+01D8  10                  element:td
+01D9  03 85 05 52 65 61 64 79  INLINE_VALUE text "Ready"
+01E1  00                  END
+01E2  01                  START
+01E3  10                  element:td
+01E4  03 85 2F 56 61 6C 69 64 61 74 69 6F 6E 20 6E 6F 77 20 72 65 6A 65 63 74 73 20 75 6E 73 75 70 70 6F 72 74 65 64 20 6D 69 6E 69 20 73 79 6E 74 61 78 2E  INLINE_VALUE text "Validation now rejects unsupported mini syntax."
+0216  00                  END
+0217  00                  END
+0218  01                  START
+0219  0F                  element:tr
+021A  2E                  attr:class
+021B  03 84 04 63 65 6C 6C  INLINE_VALUE string "cell"
+0222  01                  START
+0223  10                  element:td
+0224  03 85 08 52 65 6E 64 65 72 65 72  INLINE_VALUE text "Renderer"
+022F  00                  END
+0230  01                  START
+0231  10                  element:td
+0232  2E                  attr:class
+0233  03 84 04 77 61 72 6E  INLINE_VALUE string "warn"
+023A  03 85 05 42 61 73 69 63  INLINE_VALUE text "Basic"
+0242  00                  END
+0243  01                  START
+0244  10                  element:td
+0245  03 85 2C 43 6F 6C 75 6D 6E 73 20 61 72 65 20 65 71 75 61 6C 20 77 69 64 74 68 20 69 6E 20 74 68 69 73 20 66 69 72 73 74 20 73 6C 69 63 65 2E  INLINE_VALUE text "Columns are equal width in this first slice."
+0274  00                  END
+0275  00                  END
+0276  00                  END
+0277  00                  END
+0278  00                  END

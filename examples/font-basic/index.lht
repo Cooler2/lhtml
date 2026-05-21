@@ -1,0 +1,26 @@
+<lhtml version=1>
+<head>
+  <title>Font Basic Test</title>
+  <meta name="description" content="Semantic font family and size example">
+</head>
+
+<body font=sans,normal>
+  <block fontSize=large>
+    Large heading-like text.
+  </block>
+
+  <spacer height=12>
+
+  <block>
+    Normal sans text with a <span fontSize=small>small inline span</span> and a <span fontSize=xlarge>large inline span</span>.
+  </block>
+
+  <spacer height=12>
+
+  <row>
+    <block width=180 font=mono,small>Mono small text should be compact and wrap later.</block>
+    <spacer width=12>
+    <block width=220 font=serif,normal>Serif normal maps to the current debug font for now, but keeps the semantic value.</block>
+  </row>
+</body>
+</lhtml>

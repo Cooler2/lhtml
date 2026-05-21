@@ -1,0 +1,146 @@
+0000  4C 48 54 4D         MAGIC "LHTM"
+0004  01                  MINI_VERSION 1
+0005  02 00 01 05         COMMAND IMPORT dict=1 count=5 ; DOC in DOC
+0009  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOC
+000D  01                  START
+000E  05                  element:lhtml
+000F  20                  attr:version
+0010  04 01               INLINE_BYTE 1
+0012  01                  START
+0013  06                  element:head
+0014  01                  START
+0015  07                  element:title
+0016  03 85 10 53 74 79 6C 65 20 43 6C 61 73 73 20 54 65 73 74  INLINE_VALUE text "Style Class Test"
+0029  00                  END
+002A  08                  element:meta
+002B  21                  attr:name
+002C  03 84 0B 64 65 73 63 72 69 70 74 69 6F 6E  INLINE_VALUE string "description"
+003A  22                  attr:content
+003B  03 84 1F 53 74 79 6C 65 20 73 74 72 65 61 6D 20 63 6C 61 73 73 20 64 65 63 6C 61 72 61 74 69 6F 6E 73  INLINE_VALUE string "Style stream class declarations"
+005D  00                  END
+005E  02 05               COMMAND STYLE_BEGIN
+0060  02 00 03 02         COMMAND IMPORT dict=3 count=2 ; STYLE in STYLE
+0064  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in STYLE
+0068  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in STYLE
+006C  05                  command:classDecl
+006D  03 84 04 70 61 67 65  INLINE_VALUE string "page"
+0074  06                  command:set
+0075  2A                  attr:background
+0076  03 82 DF FF         INLINE_VALUE color #FFFAFF
+007A  06                  command:set
+007B  29                  attr:color
+007C  03 82 25 21         INLINE_VALUE color #202429
+0080  06                  command:set
+0081  27                  attr:fontFace
+0082  41                  value:TFontFace:sans
+0083  06                  command:set
+0084  28                  attr:fontSize
+0085  46                  value:TFontSize:normal
+0086  00                  END
+0087  05                  command:classDecl
+0088  03 84 06 6E 6F 74 69 63 65  INLINE_VALUE string "notice"
+0091  06                  command:set
+0092  2A                  attr:background
+0093  03 82 BF EF         INLINE_VALUE color #EEF6FF
+0097  06                  command:set
+0098  2B                  attr:border
+0099  03 82 D9 44         INLINE_VALUE color #4199CD
+009D  06                  command:set
+009E  2D                  attr:borderWidth
+009F  04 02               INLINE_BYTE 2
+00A1  06                  command:set
+00A2  2C                  attr:padding
+00A3  04 0C               INLINE_BYTE 12
+00A5  06                  command:set
+00A6  29                  attr:color
+00A7  03 82 90 01         INLINE_VALUE color #003083
+00AB  00                  END
+00AC  05                  command:classDecl
+00AD  03 84 06 61 63 63 65 6E 74  INLINE_VALUE string "accent"
+00B6  06                  command:set
+00B7  29                  attr:color
+00B8  03 82 04 C1         INLINE_VALUE color #C52020
+00BC  00                  END
+00BD  05                  command:classDecl
+00BE  03 84 07 70 72 69 6D 61 72 79  INLINE_VALUE string "primary"
+00C8  06                  command:set
+00C9  24                  attr:width
+00CA  04 B4               INLINE_BYTE 180
+00CC  06                  command:set
+00CD  2A                  attr:background
+00CE  03 82 BD EF         INLINE_VALUE color #EEF6EE
+00D2  06                  command:set
+00D3  2B                  attr:border
+00D4  03 82 88 24         INLINE_VALUE color #209141
+00D8  06                  command:set
+00D9  2D                  attr:borderWidth
+00DA  04 02               INLINE_BYTE 2
+00DC  06                  command:set
+00DD  2C                  attr:padding
+00DE  04 0A               INLINE_BYTE 10
+00E0  00                  END
+00E1  05                  command:classDecl
+00E2  03 84 09 73 65 63 6F 6E 64 61 72 79  INLINE_VALUE string "secondary"
+00EE  06                  command:set
+00EF  24                  attr:width
+00F0  04 D2               INLINE_BYTE 210
+00F2  06                  command:set
+00F3  2A                  attr:background
+00F4  03 82 9E F7         INLINE_VALUE color #F6F2F6
+00F8  06                  command:set
+00F9  2B                  attr:border
+00FA  03 82 10 84         INLINE_VALUE color #838183
+00FE  06                  command:set
+00FF  2D                  attr:borderWidth
+0100  04 01               INLINE_BYTE 1
+0102  06                  command:set
+0103  2C                  attr:padding
+0104  04 0A               INLINE_BYTE 10
+0106  00                  END
+0107  00                  END
+0108  02 04               COMMAND BODY_BEGIN
+010A  02 00 02 0C         COMMAND IMPORT dict=2 count=12 ; DOM in DOM
+010E  02 00 04 0F         COMMAND IMPORT dict=4 count=15 ; ATTR in DOM
+0112  02 00 05 0A         COMMAND IMPORT dict=5 count=10 ; VALUE in DOM
+0116  01                  START
+0117  05                  element:body
+0118  2E                  attr:class
+0119  03 84 04 70 61 67 65  INLINE_VALUE string "page"
+0120  01                  START
+0121  06                  element:block
+0122  2E                  attr:class
+0123  03 84 06 6E 6F 74 69 63 65  INLINE_VALUE string "notice"
+012C  03 85 32 43 6C 61 73 73 20 64 65 63 6C 61 72 61 74 69 6F 6E 73 20 6E 6F 77 20 63 6F 6D 65 20 66 72 6F 6D 20 74 68 65 20 53 54 59 4C 45 20 73 74 72 65 61 6D 2E  INLINE_VALUE text "Class declarations now come from the STYLE stream."
+0161  09                  command:p
+0162  03 85 06 49 6E 6C 69 6E 65  INLINE_VALUE text "Inline"
+016B  01                  START
+016C  0B                  element:span
+016D  2E                  attr:class
+016E  03 84 06 61 63 63 65 6E 74  INLINE_VALUE string "accent"
+0177  03 85 0B 61 63 63 65 6E 74 20 74 65 78 74  INLINE_VALUE text "accent text"
+0185  00                  END
+0186  03 85 22 69 73 20 72 65 73 6F 6C 76 65 64 20 74 68 72 6F 75 67 68 20 74 68 65 20 63 6C 61 73 73 20 6D 61 70 2E  INLINE_VALUE text "is resolved through the class map."
+01AB  00                  END
+01AC  08                  element:spacer
+01AD  25                  attr:height
+01AE  04 0C               INLINE_BYTE 12
+01B0  01                  START
+01B1  07                  element:row
+01B2  01                  START
+01B3  06                  element:block
+01B4  2E                  attr:class
+01B5  03 84 07 70 72 69 6D 61 72 79  INLINE_VALUE string "primary"
+01BF  03 85 14 50 72 69 6D 61 72 79 20 61 63 74 69 6F 6E 20 61 72 65 61 2E  INLINE_VALUE text "Primary action area."
+01D6  00                  END
+01D7  08                  element:spacer
+01D8  24                  attr:width
+01D9  04 0C               INLINE_BYTE 12
+01DB  01                  START
+01DC  06                  element:block
+01DD  2E                  attr:class
+01DE  03 84 09 73 65 63 6F 6E 64 61 72 79  INLINE_VALUE string "secondary"
+01EA  03 85 16 53 65 63 6F 6E 64 61 72 79 20 61 63 74 69 6F 6E 20 61 72 65 61 2E  INLINE_VALUE text "Secondary action area."
+0203  00                  END
+0204  00                  END
+0205  00                  END
+0206  00                  END
