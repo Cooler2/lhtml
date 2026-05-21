@@ -337,6 +337,8 @@ Out of scope for this slice:
 
 ## Later Work
 
+- consolidate `ljs-host-api-design.md` decisions back into `lht-spec-part3.md`
+  and `lht-spec-part4.md` after resolving the listed spec conflicts;
 - bytecode or compact IR;
 - richer value types;
 - script resource references;
