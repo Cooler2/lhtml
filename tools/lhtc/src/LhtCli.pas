@@ -11,7 +11,7 @@ implementation
 uses
   SysUtils, Classes, LhtDom, LhtParser, LhtDump, LhtTokenDump, LhtBinaryEncode,
   LhtBinaryDecode, LhtBinaryDump, LhtRender, LhtDisplayList, LhtRenderTypes,
-  LhtDebugFont, LhtTokenTable, LhtScriptRuntime;
+  LhtDebugFont, LhtTokenTable, LhtScript, LhtScriptRuntime;
 
 function LoadTextFile(const FileName: string): string;
 var
@@ -156,24 +156,69 @@ begin
   end;
 end;
 
-procedure AppendScriptOutput(Root, Node: TNode; var Output: string);
+procedure AppendLibraryBinding(var Libraries: TLjsLibraryBindingArray;
+  const InterfaceName, FunctionName, SourceText: string);
+var
+  N: Integer;
+begin
+  N := Length(Libraries);
+  SetLength(Libraries, N + 1);
+  Libraries[N].InterfaceName := InterfaceName;
+  Libraries[N].FunctionName := FunctionName;
+  Libraries[N].SourceText := SourceText;
+end;
+
+procedure AppendSourceLibraryBindings(Node: TNode;
+  var Libraries: TLjsLibraryBindingArray);
+var
+  I: Integer;
+  Tokens: TLjsTokenArray;
+  Ast: TLjsScriptAst;
+  InterfaceName, SourceText: string;
+begin
+  InterfaceName := Node.AttrValue('interface', '');
+  if InterfaceName = '' then
+    raise Exception.Create('Element <library> requires interface attribute');
+  SourceText := Node.TextContent;
+  Tokens := ParseLjsLibraryScriptText(SourceText);
+  Ast := ParseLjsLibraryProgram(Tokens);
+  if Length(Ast.PublicNames) = 0 then
+    raise Exception.CreateFmt('Library %s declares no public interface',
+      [InterfaceName]);
+  for I := 0 to High(Ast.PublicNames) do
+    AppendLibraryBinding(Libraries, InterfaceName, Ast.PublicNames[I],
+      SourceText);
+end;
+
+procedure AppendScriptOutput(Root, Node: TNode;
+  var Libraries: TLjsLibraryBindingArray; var Output: string);
 var
   I: Integer;
   Profile: TLjsRuntimeProfile;
 begin
+  if (Node.Kind = nkElement) and (Node.Name = 'library') then
+  begin
+    AppendSourceLibraryBindings(Node, Libraries);
+    Exit;
+  end;
+
   if (Node.Kind = nkElement) and (Node.Name = 'script') then
   begin
     Profile := CliPageLjsRuntimeProfile(Root);
+    Profile.Libraries := Libraries;
     Output := Output + ExecuteLjsScriptTextWithProfile(Node.TextContent, Profile);
   end;
   for I := 0 to High(Node.Children) do
-    AppendScriptOutput(Root, Node.Children[I], Output);
+    AppendScriptOutput(Root, Node.Children[I], Libraries, Output);
 end;
 
 function ExecuteDocumentScripts(Root: TNode): string;
+var
+  Libraries: TLjsLibraryBindingArray;
 begin
+  SetLength(Libraries, 0);
   Result := '';
-  AppendScriptOutput(Root, Root, Result);
+  AppendScriptOutput(Root, Root, Libraries, Result);
 end;
 
 procedure RunScript(const InputName: string);
@@ -519,6 +564,28 @@ begin
   end;
 end;
 
+procedure ExpectLibraryParseOk(const Name, Source: string);
+begin
+  ParseLjsLibraryScriptText(Source);
+  WriteLn('OK validation ', Name);
+end;
+
+procedure ExpectLibraryParseFail(const Name, Source, MessagePart: string);
+begin
+  try
+    ParseLjsLibraryScriptText(Source);
+    raise Exception.CreateFmt('validation case did not fail: %s', [Name]);
+  except
+    on E: Exception do
+    begin
+      if Pos(MessagePart, E.Message) = 0 then
+        raise Exception.CreateFmt('validation case %s failed with unexpected message: %s',
+          [Name, E.Message]);
+      WriteLn('OK validation ', Name);
+    end;
+  end;
+end;
+
 procedure RunCheckValidation;
 begin
   ExpectParseFail('unknown tag',
@@ -584,6 +651,40 @@ begin
   ExpectParseFail('script return outside function',
     '<lhtml><script>return 1;</script><body></body></lhtml>',
     'Unexpected script return outside function');
+  ExpectParseFail('script function inside if rejected',
+    '<lhtml><script>if (true) { function hidden() { return 1; } }</script><body></body></lhtml>',
+    'Function declaration requires a script block context');
+  ExpectParseFail('script nested function rejected',
+    '<lhtml><script>function outer() { function inner() { return 1; } return 2; }</script><body></body></lhtml>',
+    'Function declaration requires a script block context');
+  ExpectParseFail('script public rejected',
+    '<lhtml><script>public { add } function add() { return 1; }</script><body></body></lhtml>',
+    'Public declaration requires a library script context');
+  ExpectParseFail('library requires interface',
+    '<lhtml><library>public { add } function add() { return 1; }</library><body></body></lhtml>',
+    'Element <library> requires interface attribute');
+  ExpectParseFail('library inside body rejected',
+    '<lhtml><body><library interface=Bad>public { add } function add() { return 1; }</library></body></lhtml>',
+    'Element <library> is allowed only directly under <lhtml>');
+  ExpectLibraryParseOk('library public before function',
+    'public { add } function add(a, b) { return a + b; }');
+  ExpectLibraryParseOk('library public after function',
+    'function add(a, b) { return a + b; } public { add }');
+  ExpectLibraryParseFail('library public inside if rejected',
+    'if (true) { public { add } } function add() { return 1; }',
+    'Public declaration requires a library script block context');
+  ExpectLibraryParseFail('library public inside function rejected',
+    'function outer() { public { outer } return 1; }',
+    'Public declaration requires a library script block context');
+  ExpectLibraryParseFail('library public unknown function rejected',
+    'public { missing } function add() { return 1; }',
+    'Unknown public function');
+  ExpectLibraryParseFail('library public duplicate name rejected',
+    'public { add, add } function add() { return 1; }',
+    'Duplicate public function');
+  ExpectLibraryParseFail('library duplicate public block rejected',
+    'public { add } public { add } function add() { return 1; }',
+    'Duplicate public declaration');
 end;
 
 procedure ExpectScriptOutput(const Name, Source, Expected: string);
@@ -595,6 +696,54 @@ begin
     raise Exception.CreateFmt('script runtime case %s output mismatch: got "%s"',
       [Name, Actual]);
   WriteLn('OK script runtime ', Name);
+end;
+
+procedure ExpectDocumentScriptOutput(const Name, Source, Expected: string);
+var
+  Parser: TLhtParser;
+  Root: TNode;
+  Actual: string;
+begin
+  Parser := TLhtParser.Create(Source);
+  Root := nil;
+  try
+    Root := Parser.Parse;
+    Actual := ExecuteDocumentScripts(Root);
+    if Actual <> Expected then
+      raise Exception.CreateFmt('script runtime case %s output mismatch: got "%s"',
+        [Name, Actual]);
+    WriteLn('OK script runtime ', Name);
+  finally
+    Root.Free;
+    Parser.Free;
+  end;
+end;
+
+procedure ExpectDocumentScriptFail(const Name, Source, MessagePart: string);
+var
+  Parser: TLhtParser;
+  Root: TNode;
+begin
+  Parser := TLhtParser.Create(Source);
+  Root := nil;
+  try
+    try
+      Root := Parser.Parse;
+      ExecuteDocumentScripts(Root);
+      raise Exception.CreateFmt('script runtime case did not fail: %s', [Name]);
+    except
+      on E: Exception do
+      begin
+        if Pos(MessagePart, E.Message) = 0 then
+          raise Exception.CreateFmt('script runtime case %s failed with unexpected message: %s',
+            [Name, E.Message]);
+        WriteLn('OK script runtime ', Name);
+      end;
+    end;
+  finally
+    Root.Free;
+    Parser.Free;
+  end;
 end;
 
 procedure ExpectScriptOutputWithProfile(const Name, Source, Expected: string;
@@ -649,6 +798,37 @@ procedure ExpectScriptRuntimeProfileFail(const Name, Source,
 begin
   try
     ExecuteLjsScriptTextWithProfile(Source, Profile);
+    raise Exception.CreateFmt('script runtime case did not fail: %s', [Name]);
+  except
+    on E: Exception do
+    begin
+      if Pos(MessagePart, E.Message) = 0 then
+        raise Exception.CreateFmt('script runtime case %s failed with unexpected message: %s',
+          [Name, E.Message]);
+      WriteLn('OK script runtime ', Name);
+    end;
+  end;
+end;
+
+procedure ExpectScriptLibraryOutput(const Name, Source, InterfaceName,
+  LibrarySource, FunctionName, Expected: string);
+var
+  Actual: string;
+begin
+  Actual := ExecuteLjsScriptTextWithLibrary(Source, InterfaceName, LibrarySource,
+    FunctionName);
+  if Actual <> Expected then
+    raise Exception.CreateFmt('script runtime case %s output mismatch: got "%s"',
+      [Name, Actual]);
+  WriteLn('OK script runtime ', Name);
+end;
+
+procedure ExpectScriptLibraryFail(const Name, Source, InterfaceName,
+  LibrarySource, FunctionName, MessagePart: string);
+begin
+  try
+    ExecuteLjsScriptTextWithLibrary(Source, InterfaceName, LibrarySource,
+      FunctionName);
     raise Exception.CreateFmt('script runtime case did not fail: %s', [Name]);
   except
     on E: Exception do
@@ -900,6 +1080,38 @@ begin
   ExpectScriptOutput('function extra arguments ignored',
     'function first(a) { return a; } Debug.log(first(1, 2, 3));',
     'LOG: 1' + #10);
+  ExpectScriptLibraryOutput('library plain value call',
+    'Debug.log(MathLib.add(2, 3));',
+    'MathLib',
+    'function add(a, b) { return a + b; }',
+    'add',
+    'LOG: 5' + #10);
+  ExpectScriptLibraryOutput('library public value call',
+    'Debug.log(MathLib.add(2, 3));',
+    'MathLib',
+    'public { add } function add(a, b) { return a + b; } function hidden() { return 0; }',
+    'add',
+    'LOG: 5' + #10);
+  ExpectScriptLibraryFail('library private function rejected',
+    'Debug.log(MathLib.hidden());',
+    'MathLib',
+    'public { add } function add() { return 1; } function hidden() { return 2; }',
+    'hidden',
+    'Script library function is not public');
+  ExpectScriptLibraryFail('library isolated from debug host',
+    'Debug.log(LogLib.tryLog(1));',
+    'LogLib',
+    'function tryLog(value) { Debug.log(value); return value; }',
+    'tryLog',
+    'Unknown script host call');
+  ExpectDocumentScriptOutput('source library public call',
+    '<lhtml><library interface=MathLib>public { add } function add(a, b) { return a + b; }</library>' +
+    '<script>Debug.log(MathLib.add(7, 8));</script><body></body></lhtml>',
+    'LOG: 15' + #10);
+  ExpectDocumentScriptFail('source library private call rejected',
+    '<lhtml><library interface=MathLib>public { add } function add() { return 1; } function hidden() { return 2; }</library>' +
+    '<script>Debug.log(MathLib.hidden());</script><body></body></lhtml>',
+    'Unknown script host call: MathLib.hidden');
   ExpectScriptRuntimeFail('unknown variable',
     'Debug.log(missing);',
     'Unknown script variable');

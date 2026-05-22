@@ -398,8 +398,15 @@ Current stable direction:
 - libraries have isolated globals;
 - libraries cannot access document globals;
 - libraries cannot access DOM, storage, network, or caller globals;
-- public interface is declared with `exports`;
+- public interface is declared with a top-level `public { ... }` block;
 - dependencies are injected by the caller.
+
+`public { ... }` is a declarative library interface list, not a runtime
+statement. It is allowed anywhere at top level, but the preferred source style
+is to place it at the beginning of the library file so the public contract is
+visible before the implementation. Name resolution is order-independent: the
+listed public names may refer to top-level functions declared later in the same
+library.
 
 The older `lht-spec-part3.md` dynamic loading/unloading text conflicts with
 `lht-scripting-simplification.md`, which recommends no explicit unload in v1.
@@ -421,9 +428,21 @@ order:
    `Document.getElement(id)` in the mini runtime.
 5. Implement real document mutation for `color`, `background`, `border`, and
    `borderWidth`. Done for attached mini-DOM `TNode` roots.
-6. Later, implement `el.text` read/write for text-hosting elements and spans.
-7. Add event handler dispatch for `onClick`/`click`.
-8. Add `document.on("error", ...)` after the top-level error model is wired.
+6. Add the first isolated library call path. Started with explicit runtime
+   bindings from `Interface.function` to a library source function, with plain
+   scalar values only.
+7. Add source-level validation for library `public { ... }` declarations. Done
+   for library script parsing, top-level-only enforcement, duplicate checks,
+   unknown public names, and runtime-local public-call enforcement.
+8. Add inline source `<library interface="Name">` execution. Done for top-level
+   inline library elements, public interface binding, and document scripts that
+   call public library functions. External `src`, binary resource
+   representation, and cross-origin loading remain future work.
+9. Pass a narrow drawing capability, such as a canvas context, into an isolated
+   library.
+10. Later, implement `el.text` read/write for text-hosting elements and spans.
+11. Add event handler dispatch for `onClick`/`click`.
+12. Add `document.on("error", ...)` after the top-level error model is wired.
 
 This keeps the first browser bridge small while aligning it with the LHT spec
 direction.

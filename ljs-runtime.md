@@ -111,12 +111,99 @@ browser lifecycle concern rather than the CLI renderer contract.
 Runtime output fixtures use `LF` line endings so the buffer is stable across
 platforms.
 
+## Library Calls
+
+The first library execution slice validates library source with a separate
+library script mode and supports inline source libraries:
+
+```lht
+<library interface="MathLib">
+public { add }
+
+function add(a, b) {
+  return a + b;
+}
+</library>
+
+<script>
+Debug.log(MathLib.add(2, 3));
+</script>
+```
+
+This slice does not define `src`, external resources, binary resource
+representation, or cross-origin loading yet.
+
+A runtime profile may register explicit library bindings:
+
+```text
+InterfaceName.FunctionName -> library source text + public function name
+```
+
+Library source declares its public interface with a top-level `public` block:
+
+```js
+public { add, clamp }
+
+function add(a, b) {
+  return a + b;
+}
+
+function clamp(value, min, max) {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+```
+
+`public { ... }` is a library interface declaration, not an executed statement.
+It may appear anywhere at top level, but the recommended style is to put it at
+the start of the library as an interface header. Validation is performed after
+the full library script is parsed, so public names may refer to functions
+declared later in the file.
+
+The first source-level validation contract is implemented:
+
+- `public { ... }` is allowed only in library scripts;
+- it is top-level only and is rejected inside `if`, `while`, or function
+  bodies;
+- at most one `public` block is allowed per library script;
+- every listed name must refer to a top-level function;
+- duplicate public names are invalid;
+- top-level functions not listed in `public` remain private to the library.
+
+Runtime-local bindings that call a library with a `public` block may call only
+listed public functions. A binding may still call a function in library source
+that has no `public` block; this preserves the early explicit-binding test path
+for narrow runtime fixtures.
+
+Inline `<library>` elements require an `interface` attribute, are allowed only
+directly under `<lhtml>`, and expose one interface member per listed public
+function. Document scripts below the library can call these members through
+`InterfaceName.functionName(...)`. Functions not listed in `public` are not
+registered in the document profile.
+
+Document code calls the bound function through the interface-like member-call
+shape:
+
+```js
+Debug.log(MathLib.add(2, 3));
+```
+
+The library source is parsed and executed in a separate `isolated` runtime when
+the public function is called. The library function receives only evaluated
+arguments from the caller. It has no ambient `Debug`, `Browser`, `Document`,
+canvas, DOM, storage, network, timer, or caller-global access.
+
+This first source slice supports plain scalar values. Passing explicit narrow
+host capabilities, such as a drawing-only canvas context, is the next library
+slice.
+
 ## AST Evaluation
 
 Validation and runtime evaluation share the same AST path. `ParseLjsProgram`
 builds statement nodes for declarations, assignments, calls, functions,
-returns, `if` / `else`, and `while`. Expression fields reuse the expression AST
-parser.
+returns, `if` / `else`, `while`, and library `public` declarations. Expression
+fields reuse the expression AST parser.
 
 Runtime executes statement nodes through the AST instead of rescanning token
 ranges for statement boundaries. This keeps validation and execution aligned
@@ -164,6 +251,11 @@ Function arity is intentionally permissive:
 - missing arguments bind their parameters to `null`;
 - extra arguments are evaluated but are not bound to named parameters;
 - there is no `arguments` object in the first function slice.
+
+Function declarations are allowed only at the top level of a `<script>` block.
+Nested declarations inside `if`, `while`, or another function are rejected by
+validation. This keeps the first function model explicit: there is one script
+function table, no closures, and no conditional function hoisting.
 
 The `+` operator concatenates when either operand is a string. Other arithmetic
 operators require numbers. Comparisons currently require numbers.

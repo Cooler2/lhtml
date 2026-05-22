@@ -20,7 +20,7 @@ type
     function Pop: TNode;
     function Top: TNode;
     procedure ParseText;
-    procedure ParseRawScript(Node: TNode);
+    procedure ParseRawElement(Node: TNode; const CloseTag: string);
     procedure SkipComment;
     procedure ParseTag;
     function ReadName: string;
@@ -236,17 +236,17 @@ begin
     Top.AddChild(TNode.CreateText(S));
 end;
 
-procedure TLhtParser.ParseRawScript(Node: TNode);
+procedure TLhtParser.ParseRawElement(Node: TNode; const CloseTag: string);
 var
   ClosePos: SizeInt;
-  ScriptText: string;
+  RawText: string;
 begin
-  ClosePos := Pos('</script>', LowerCase(Copy(FSource, FPos, MaxInt)));
+  ClosePos := Pos(CloseTag, LowerCase(Copy(FSource, FPos, MaxInt)));
   if ClosePos = 0 then
-    raise Exception.Create('Unterminated <script> element');
-  ScriptText := Copy(FSource, FPos, ClosePos - 1);
-  Node.AddChild(TNode.CreateText(ScriptText));
-  Inc(FPos, ClosePos - 1 + Length('</script>'));
+    raise Exception.CreateFmt('Unterminated <%s> element', [Node.Name]);
+  RawText := Copy(FSource, FPos, ClosePos - 1);
+  Node.AddChild(TNode.CreateText(RawText));
+  Inc(FPos, ClosePos - 1 + Length(CloseTag));
 end;
 
 procedure TLhtParser.SkipComment;
@@ -292,6 +292,8 @@ begin
   SkipSpaces;
   Name := ReadName;
   ValidateMiniElementName(Name);
+  if (not Closing) and (Name = 'library') and (Top.Name <> 'lhtml') then
+    raise Exception.Create('Element <library> is allowed only directly under <lhtml>');
 
   if Closing then
   begin
@@ -345,7 +347,9 @@ begin
   if (not SelfClose) and (not IsBareTag(Name)) then
   begin
     if Name = 'script' then
-      ParseRawScript(Node)
+      ParseRawElement(Node, '</script>')
+    else if Name = 'library' then
+      ParseRawElement(Node, '</library>')
     else
       Push(Node);
   end;
@@ -373,7 +377,8 @@ begin
     else if Doc.Children[I].Name = 'body' then
       Inc(BodyCount)
     else if (Doc.Children[I].Name <> 'style') and
-      (Doc.Children[I].Name <> 'script') then
+      (Doc.Children[I].Name <> 'script') and
+      (Doc.Children[I].Name <> 'library') then
       raise Exception.CreateFmt('Element <%s> is not allowed directly under <lhtml>',
         [Doc.Children[I].Name]);
   end;
@@ -411,6 +416,13 @@ begin
   if (Node.Kind = nkElement) and (Node.Name = 'script') then
   begin
     ParseLjsScriptText(Node.TextContent);
+    Exit;
+  end;
+  if (Node.Kind = nkElement) and (Node.Name = 'library') then
+  begin
+    if Node.AttrValue('interface', '') = '' then
+      raise Exception.Create('Element <library> requires interface attribute');
+    ParseLjsLibraryScriptText(Node.TextContent);
     Exit;
   end;
   for I := 0 to High(Node.Children) do

@@ -53,7 +53,7 @@ end;
 
 procedure ValidateMiniElementName(const Name: string);
 begin
-  if (Name = 'style') or (Name = 'script') then
+  if (Name = 'style') or (Name = 'script') or (Name = 'library') then
     Exit;
   if (Name = 'p') or (Name = 'br') then
     TokenDefForNameInStream(Name, tkCommand, tsDom)
@@ -68,6 +68,8 @@ end;
 procedure ValidateMiniAttributeName(const Name: string; AllowFontShorthand: Boolean);
 begin
   if AllowFontShorthand and (Name = 'font') then
+    Exit;
+  if Name = 'interface' then
     Exit;
   TokenDefForName(Name, tkAttr);
 end;
@@ -101,6 +103,8 @@ begin
     ValidateFontShorthand(Value);
     Exit;
   end;
+  if Name = 'interface' then
+    Exit;
   if IsIntegerAttr(Name) and (not IsUIntLiteral(Value)) then
     raise Exception.CreateFmt('Attribute %s expects unsigned integer, got "%s"',
       [Name, Value]);

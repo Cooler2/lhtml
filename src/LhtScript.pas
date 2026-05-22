@@ -8,7 +8,7 @@ type
   TLjsTokenKind = (ljsDict, ljsIdentifier, ljsString, ljsNumber);
   TLjsExprNodeKind = (lenToken, lenBinary, lenCall, lenMemberCall);
   TLjsStatementKind = (lskLet, lskAssign, lskSetMember, lskCall, lskIf,
-    lskWhile, lskFunction, lskReturn);
+    lskWhile, lskFunction, lskReturn, lskPublic);
 
   TLjsToken = record
     Kind: TLjsTokenKind;
@@ -48,13 +48,17 @@ type
   TLjsScriptAst = record
     Nodes: array of TLjsStatementNode;
     Root: TLjsStatementList;
+    PublicNames: array of string;
   end;
 
 function ParseLjsScriptText(const S: string): TLjsTokenArray;
+function ParseLjsLibraryScriptText(const S: string): TLjsTokenArray;
 procedure ValidateLjsTokens(const Tokens: TLjsTokenArray);
+procedure ValidateLjsLibraryTokens(const Tokens: TLjsTokenArray);
 function ParseLjsExpressionRange(const Tokens: TLjsTokenArray;
   StartIndex, EndIndex: Integer): TLjsExpression;
 function ParseLjsProgram(const Tokens: TLjsTokenArray): TLjsScriptAst;
+function ParseLjsLibraryProgram(const Tokens: TLjsTokenArray): TLjsScriptAst;
 function LjsTokensToText(const Tokens: TLjsTokenArray): string;
 function LjsTokenDebugName(const Token: TLjsToken): string;
 
@@ -90,12 +94,15 @@ type
   private
     FTokens: TLjsTokenArray;
     FIndex: Integer;
+    FLibraryMode: Boolean;
     FAst: TLjsScriptAst;
     function AddNode(Kind: TLjsStatementKind; TokenIndex: Integer): Integer;
     function IsDict(Index: Integer; const Name: string): Boolean;
     function ParseExpressionUntil(const EndPuncts: string): TLjsExpression;
-    function ParseStatementList(StopAtBrace, AllowReturn: Boolean): TLjsStatementList;
-    function ParseStatement(AllowReturn, AllowFunction: Boolean): Integer;
+    function ParseStatementList(StopAtBrace, AllowReturn,
+      AllowFunction, AllowPublic: Boolean): TLjsStatementList;
+    function ParseStatement(AllowReturn, AllowFunction,
+      AllowPublic: Boolean): Integer;
     function ParseStatementBody(AllowReturn: Boolean): TLjsStatementList;
     function ParseLet: Integer;
     function ParseAssign: Integer;
@@ -105,8 +112,11 @@ type
     function ParseWhile(AllowReturn: Boolean): Integer;
     function ParseIf(AllowReturn: Boolean): Integer;
     function ParseFunction: Integer;
+    function ParsePublic: Integer;
+    procedure ValidatePublicInterface;
   public
-    function Parse(const Tokens: TLjsTokenArray): TLjsScriptAst;
+    function Parse(const Tokens: TLjsTokenArray;
+      LibraryMode: Boolean): TLjsScriptAst;
   end;
 
 procedure AddDictToken(var Tokens: TLjsTokenArray; const Name: string);
@@ -144,7 +154,8 @@ function KeywordOrBuiltinName(const Word: string): string;
 begin
   if (Word = 'let') or (Word = 'if') or (Word = 'else') or
      (Word = 'while') or (Word = 'function') or (Word = 'return') or
-     (Word = 'true') or (Word = 'false') or (Word = 'null') then
+     (Word = 'public') or (Word = 'true') or (Word = 'false') or
+     (Word = 'null') then
     Result := 'kw:' + Word
   else
     Result := '';
@@ -226,7 +237,7 @@ begin
   raise Exception.Create('Unterminated script block comment');
 end;
 
-function ParseLjsScriptText(const S: string): TLjsTokenArray;
+function TokenizeLjsScriptText(const S: string): TLjsTokenArray;
 var
   Pos, Start: Integer;
   Word, Name: string;
@@ -303,7 +314,18 @@ begin
     end;
     Inc(Pos);
   end;
+end;
+
+function ParseLjsScriptText(const S: string): TLjsTokenArray;
+begin
+  Result := TokenizeLjsScriptText(S);
   ValidateLjsTokens(Result);
+end;
+
+function ParseLjsLibraryScriptText(const S: string): TLjsTokenArray;
+begin
+  Result := TokenizeLjsScriptText(S);
+  ValidateLjsLibraryTokens(Result);
 end;
 
 function TokenIsDict(const Token: TLjsToken; const Name: string): Boolean;
@@ -680,13 +702,13 @@ begin
   if IsDict(FIndex, 'punct:{') then
   begin
     Inc(FIndex);
-    Result := ParseStatementList(True, AllowReturn);
+    Result := ParseStatementList(True, AllowReturn, False, False);
     ExpectToken(FTokens, FIndex, 'punct:}', 'Expected script block "}"');
   end
   else
   begin
     SetLength(Result, 1);
-    Result[0] := ParseStatement(AllowReturn, False);
+    Result[0] := ParseStatement(AllowReturn, False, False);
   end;
 end;
 
@@ -803,12 +825,39 @@ begin
   end;
   ExpectToken(FTokens, FIndex, 'punct:)', 'Expected ")" after function parameters');
   ExpectToken(FTokens, FIndex, 'punct:{', 'Expected script block "{"');
-  FAst.Nodes[Result].Body := ParseStatementList(True, True);
+  FAst.Nodes[Result].Body := ParseStatementList(True, True, False, False);
   ExpectToken(FTokens, FIndex, 'punct:}', 'Expected script block "}"');
 end;
 
+function TLjsStatementParser.ParsePublic: Integer;
+begin
+  Result := AddNode(lskPublic, FIndex);
+  Inc(FIndex);
+  ExpectToken(FTokens, FIndex, 'punct:{', 'Expected "{" after public');
+  if not IsDict(FIndex, 'punct:}') then
+  begin
+    while True do
+    begin
+      if (FIndex > High(FTokens)) or (FTokens[FIndex].Kind <> ljsIdentifier) then
+        raise Exception.CreateFmt('Expected public function identifier, got %s',
+          [TokenLabel(FTokens, FIndex)]);
+      SetLength(FAst.Nodes[Result].Params, Length(FAst.Nodes[Result].Params) + 1);
+      FAst.Nodes[Result].Params[High(FAst.Nodes[Result].Params)] :=
+        FTokens[FIndex].Value;
+      Inc(FIndex);
+      if IsDict(FIndex, 'punct:,') then
+      begin
+        Inc(FIndex);
+        Continue;
+      end;
+      Break;
+    end;
+  end;
+  ExpectToken(FTokens, FIndex, 'punct:}', 'Expected "}" after public names');
+end;
+
 function TLjsStatementParser.ParseStatement(AllowReturn,
-  AllowFunction: Boolean): Integer;
+  AllowFunction, AllowPublic: Boolean): Integer;
 begin
   if FIndex > High(FTokens) then
     raise Exception.Create('Unexpected end of script statement');
@@ -840,6 +889,14 @@ begin
       raise Exception.Create('Function declaration requires a script block context');
     Result := ParseFunction;
   end
+  else if IsDict(FIndex, 'kw:public') then
+  begin
+    if not FLibraryMode then
+      raise Exception.Create('Public declaration requires a library script context');
+    if not AllowPublic then
+      raise Exception.Create('Public declaration requires a library script block context');
+    Result := ParsePublic;
+  end
   else if IsDict(FIndex, 'kw:else') then
     raise Exception.Create('Unexpected script else without matching if')
   else
@@ -847,8 +904,8 @@ begin
       [TokenLabel(FTokens, FIndex)]);
 end;
 
-function TLjsStatementParser.ParseStatementList(StopAtBrace,
-  AllowReturn: Boolean): TLjsStatementList;
+function TLjsStatementParser.ParseStatementList(StopAtBrace, AllowReturn,
+  AllowFunction, AllowPublic: Boolean): TLjsStatementList;
 var
   N: Integer;
   List: TLjsStatementList;
@@ -868,7 +925,7 @@ begin
 
     N := Length(List);
     SetLength(List, N + 1);
-    List[N] := ParseStatement(AllowReturn, True);
+    List[N] := ParseStatement(AllowReturn, AllowFunction, AllowPublic);
   end;
 
   if StopAtBrace then
@@ -876,13 +933,59 @@ begin
   Result := List;
 end;
 
-function TLjsStatementParser.Parse(const Tokens: TLjsTokenArray): TLjsScriptAst;
+procedure TLjsStatementParser.ValidatePublicInterface;
+var
+  I, J, PublicNode: Integer;
+  Name: string;
+  Found: Boolean;
+begin
+  PublicNode := -1;
+  for I := 0 to High(FAst.Root) do
+    if FAst.Nodes[FAst.Root[I]].Kind = lskPublic then
+    begin
+      if PublicNode >= 0 then
+        raise Exception.Create('Duplicate public declaration in library script');
+      PublicNode := FAst.Root[I];
+    end;
+
+  if PublicNode < 0 then
+    Exit;
+
+  SetLength(FAst.PublicNames, Length(FAst.Nodes[PublicNode].Params));
+  for I := 0 to High(FAst.Nodes[PublicNode].Params) do
+  begin
+    Name := FAst.Nodes[PublicNode].Params[I];
+    for J := 0 to I - 1 do
+      if FAst.Nodes[PublicNode].Params[J] = Name then
+        raise Exception.CreateFmt('Duplicate public function: %s', [Name]);
+
+    Found := False;
+    for J := 0 to High(FAst.Root) do
+      if (FAst.Nodes[FAst.Root[J]].Kind = lskFunction) and
+         (FAst.Nodes[FAst.Root[J]].Name = Name) then
+      begin
+        Found := True;
+        Break;
+      end;
+    if not Found then
+      raise Exception.CreateFmt('Unknown public function: %s', [Name]);
+
+    FAst.PublicNames[I] := Name;
+  end;
+end;
+
+function TLjsStatementParser.Parse(const Tokens: TLjsTokenArray;
+  LibraryMode: Boolean): TLjsScriptAst;
 begin
   FTokens := Tokens;
   FIndex := 0;
+  FLibraryMode := LibraryMode;
   SetLength(FAst.Nodes, 0);
   SetLength(FAst.Root, 0);
-  FAst.Root := ParseStatementList(False, False);
+  SetLength(FAst.PublicNames, 0);
+  FAst.Root := ParseStatementList(False, False, True, LibraryMode);
+  if LibraryMode then
+    ValidatePublicInterface;
   Result := FAst;
 end;
 
@@ -892,7 +995,19 @@ var
 begin
   Parser := TLjsStatementParser.Create;
   try
-    Result := Parser.Parse(Tokens);
+    Result := Parser.Parse(Tokens, False);
+  finally
+    Parser.Free;
+  end;
+end;
+
+function ParseLjsLibraryProgram(const Tokens: TLjsTokenArray): TLjsScriptAst;
+var
+  Parser: TLjsStatementParser;
+begin
+  Parser := TLjsStatementParser.Create;
+  try
+    Result := Parser.Parse(Tokens, True);
   finally
     Parser.Free;
   end;
@@ -901,6 +1016,11 @@ end;
 procedure ValidateLjsTokens(const Tokens: TLjsTokenArray);
 begin
   ParseLjsProgram(Tokens);
+end;
+
+procedure ValidateLjsLibraryTokens(const Tokens: TLjsTokenArray);
+begin
+  ParseLjsLibraryProgram(Tokens);
 end;
 
 function EscapeStringLiteral(const S: string): string;

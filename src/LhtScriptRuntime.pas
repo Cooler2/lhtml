@@ -22,6 +22,14 @@ type
 
   TLjsHostBindingArray = array of TLjsHostBinding;
 
+  TLjsLibraryBinding = record
+    InterfaceName: string;
+    FunctionName: string;
+    SourceText: string;
+  end;
+
+  TLjsLibraryBindingArray = array of TLjsLibraryBinding;
+
   TLjsRuntimeProfile = record
     Name: string;
     Capabilities: TLjsCapabilitySet;
@@ -33,6 +41,7 @@ type
     HostObjectLimit: Integer;
     TokenCountLimit: Integer;
     HostBindings: TLjsHostBindingArray;
+    Libraries: TLjsLibraryBindingArray;
     DomRoot: TNode;
   end;
 
@@ -51,6 +60,8 @@ function ExecuteLjsScriptTextWithHosts(const S: string;
   const Hosts: TLjsHostBindingArray): string;
 function ExecuteLjsScriptTextWithProfile(const S: string;
   const Profile: TLjsRuntimeProfile): string;
+function ExecuteLjsScriptTextWithLibrary(const S, InterfaceName,
+  LibrarySourceText, FunctionName: string): string;
 
 implementation
 
@@ -108,6 +119,12 @@ type
     OutputPrefix: string;
   end;
 
+  TLjsRuntimeLibraryBinding = record
+    FullName: string;
+    FunctionName: string;
+    SourceText: string;
+  end;
+
   ELjsReturn = class(Exception)
   public
     Value: TLjsValue;
@@ -133,6 +150,7 @@ type
     FCapabilities: TLjsCapabilitySet;
     FDomRoot: TNode;
     FHostBindings: array of TLjsRuntimeHostBinding;
+    FLibraryBindings: array of TLjsRuntimeLibraryBinding;
     FHostObjects: array of TLjsHostObject;
     function FindVar(const Name: string): Integer;
     function FindVarInScope(ScopeIndex: Integer; const Name: string): Integer;
@@ -160,9 +178,12 @@ type
       const OpName: string);
     function EscapeOutputValue(const S: string): string;
     function FindHostCall(const FullName: string): Integer;
+    function FindLibraryCall(const FullName: string): Integer;
     procedure ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
       const Args: array of TLjsValue; out ReturnValue: TLjsValue);
     function CallRootHost(const FullName: string;
+      const Args: array of TLjsValue): TLjsValue;
+    function CallLibraryFunction(const FullName: string;
       const Args: array of TLjsValue): TLjsValue;
     function CallCanvasMethod(const ObjectId: Integer; const AMethodName: string;
       const Args: array of TLjsValue): TLjsValue;
@@ -182,7 +203,11 @@ type
     procedure RegisterHostCall(const ObjectName, HostMethodName,
       OutputPrefix: string; Capability: TLjsCapability;
       HandlerKind: TLjsHostHandlerKind);
+    procedure RegisterLibraryCall(const InterfaceName, FunctionName,
+      SourceText: string);
     function Run: string;
+    function RunFunction(const FunctionName: string;
+      const Args: array of TLjsValue): TLjsValue;
   end;
 
 function NullValue: TLjsValue;
@@ -312,6 +337,7 @@ begin
   Result.Name := 'isolated';
   Result.Capabilities := [];
   Result.HostBindings := nil;
+  Result.Libraries := nil;
   Result.StepLimit := LJS_DEFAULT_STEP_LIMIT;
   Result.StackSlotLimit := LJS_DEFAULT_STACK_SLOT_LIMIT;
   Result.OutputRecordLimit := LJS_DEFAULT_OUTPUT_RECORD_LIMIT;
@@ -623,6 +649,16 @@ begin
   Result := -1;
 end;
 
+function TLjsRuntime.FindLibraryCall(const FullName: string): Integer;
+var
+  I: Integer;
+begin
+  for I := 0 to High(FLibraryBindings) do
+    if FLibraryBindings[I].FullName = FullName then
+      Exit(I);
+  Result := -1;
+end;
+
 function TLjsRuntime.CallRootHost(const FullName: string;
   const Args: array of TLjsValue): TLjsValue;
 var
@@ -632,6 +668,27 @@ begin
   if BindingIndex < 0 then
     raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
   ExecuteHostBinding(FHostBindings[BindingIndex], Args, Result);
+end;
+
+function TLjsRuntime.CallLibraryFunction(const FullName: string;
+  const Args: array of TLjsValue): TLjsValue;
+var
+  BindingIndex: Integer;
+  LibraryRuntime: TLjsRuntime;
+begin
+  BindingIndex := FindLibraryCall(FullName);
+  if BindingIndex < 0 then
+    raise Exception.CreateFmt('Unknown script library call: %s', [FullName]);
+
+  LibraryRuntime := TLjsRuntime.Create(
+    ParseLjsLibraryScriptText(FLibraryBindings[BindingIndex].SourceText),
+    IsolatedLjsRuntimeProfile);
+  try
+    Result := LibraryRuntime.RunFunction(
+      FLibraryBindings[BindingIndex].FunctionName, Args);
+  finally
+    LibraryRuntime.Free;
+  end;
 end;
 
 procedure TLjsRuntime.ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
@@ -817,6 +874,11 @@ begin
       TargetName := FTokens[Expression.Nodes[Node.Left].TokenIndex].Value;
       if FindVar(TargetName) < 0 then
       begin
+        if FindLibraryCall(TargetName + '.' + Node.Name) >= 0 then
+        begin
+          Result := CallLibraryFunction(TargetName + '.' + Node.Name, Args);
+          Exit;
+        end;
         if FindHostCall(TargetName + '.' + Node.Name) >= 0 then
         begin
           Result := CallRootHost(TargetName + '.' + Node.Name, Args);
@@ -934,7 +996,7 @@ begin
         Step;
         ExecList(Node.Body);
       end;
-    lskFunction:
+    lskFunction, lskPublic:
       begin
       end;
     lskReturn:
@@ -960,6 +1022,30 @@ begin
   Result := FOutput;
 end;
 
+function TLjsRuntime.RunFunction(const FunctionName: string;
+  const Args: array of TLjsValue): TLjsValue;
+var
+  I: Integer;
+  IsPublic: Boolean;
+begin
+  FAst := ParseLjsLibraryProgram(FTokens);
+  CollectFunctions;
+  if Length(FAst.PublicNames) > 0 then
+  begin
+    IsPublic := False;
+    for I := 0 to High(FAst.PublicNames) do
+      if FAst.PublicNames[I] = FunctionName then
+      begin
+        IsPublic := True;
+        Break;
+      end;
+    if not IsPublic then
+      raise Exception.CreateFmt('Script library function is not public: %s',
+        [FunctionName]);
+  end;
+  Result := CallFunction(FunctionName, Args);
+end;
+
 procedure TLjsRuntime.RegisterHostCall(const ObjectName, HostMethodName,
   OutputPrefix: string; Capability: TLjsCapability;
   HandlerKind: TLjsHostHandlerKind);
@@ -974,6 +1060,20 @@ begin
   FHostBindings[N].Capability := Capability;
   FHostBindings[N].HandlerKind := HandlerKind;
   FHostBindings[N].OutputPrefix := OutputPrefix;
+end;
+
+procedure TLjsRuntime.RegisterLibraryCall(const InterfaceName, FunctionName,
+  SourceText: string);
+var
+  N: Integer;
+begin
+  if (InterfaceName = '') or (FunctionName = '') then
+    raise Exception.Create('Script library binding requires interface and function names');
+  N := Length(FLibraryBindings);
+  SetLength(FLibraryBindings, N + 1);
+  FLibraryBindings[N].FullName := InterfaceName + '.' + FunctionName;
+  FLibraryBindings[N].FunctionName := FunctionName;
+  FLibraryBindings[N].SourceText := SourceText;
 end;
 
 function ExecuteLjsTokensWithProfile(const Tokens: TLjsTokenArray;
@@ -993,6 +1093,9 @@ begin
         Runtime.RegisterHostCall(Profile.HostBindings[I].ObjectName,
           Profile.HostBindings[I].MethodName, Profile.HostBindings[I].OutputPrefix,
           Profile.HostBindings[I].Capability, Profile.HostBindings[I].HandlerKind);
+    for I := 0 to High(Profile.Libraries) do
+      Runtime.RegisterLibraryCall(Profile.Libraries[I].InterfaceName,
+        Profile.Libraries[I].FunctionName, Profile.Libraries[I].SourceText);
     Result := Runtime.Run;
   finally
     Runtime.Free;
@@ -1019,6 +1122,19 @@ function ExecuteLjsScriptTextWithProfile(const S: string;
   const Profile: TLjsRuntimeProfile): string;
 begin
   Result := ExecuteLjsTokensWithProfile(ParseLjsScriptText(S), Profile);
+end;
+
+function ExecuteLjsScriptTextWithLibrary(const S, InterfaceName,
+  LibrarySourceText, FunctionName: string): string;
+var
+  Profile: TLjsRuntimeProfile;
+begin
+  Profile := CliDebugLjsRuntimeProfile;
+  SetLength(Profile.Libraries, 1);
+  Profile.Libraries[0].InterfaceName := InterfaceName;
+  Profile.Libraries[0].FunctionName := FunctionName;
+  Profile.Libraries[0].SourceText := LibrarySourceText;
+  Result := ExecuteLjsScriptTextWithProfile(S, Profile);
 end;
 
 function ExecuteLjsScriptTextWithHosts(const S: string;
