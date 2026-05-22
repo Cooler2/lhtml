@@ -267,6 +267,39 @@ Nested declarations inside `if`, `while`, or another function are rejected by
 validation. This keeps the first function model explicit: there is one script
 function table, no closures, and no conditional function hoisting.
 
+Future callback and event work should introduce `FunctionRef` as a first-class
+runtime value without introducing anonymous functions or closures. A
+`FunctionRef` points to an existing named LJS function:
+
+- a document top-level function, such as `handleClick`;
+- a public library function, such as `App.handleClick`.
+
+Document code must not be able to obtain references to private library
+functions. Host methods such as `Debug.log` or `Document.getElement` should not
+be materialized as function references in the first callback slice; they remain
+profile-gated host calls.
+
+Function references should be callable:
+
+```js
+function apply2(f, a, b) {
+  return f(a, b);
+}
+
+function add(a, b) {
+  return a + b;
+}
+
+Debug.log(apply2(add, 2, 3));
+Debug.log(apply2(MathOps.mul, 2, 3));
+```
+
+This gives LJS useful polymorphism and callback composition while keeping the
+function model small: no anonymous functions, no closures, no `bind`, no
+`call/apply`, and no function object properties. Direct calls and calls through
+`FunctionRef` use the same arity behavior: missing arguments become `null`, and
+extra arguments are evaluated but not bound.
+
 The `+` operator concatenates when either operand is a string. Other arithmetic
 operators require numbers. Comparisons currently require numbers.
 

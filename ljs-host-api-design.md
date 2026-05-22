@@ -117,6 +117,34 @@ btn.on("click", send);
 btn.off("click", send);
 ```
 
+Handler targets should be function references, not inline source snippets.
+The first event slice should support references to named top-level document
+functions and public library functions:
+
+```lht
+<button onClick=App.send>Send</button>
+```
+
+```js
+btn.on("click", App.send);
+```
+
+Anonymous handler functions and inline handler bodies are intentionally outside
+v1. This avoids closures, keeps binary handler representation compact, and
+preserves clear error attribution. Function references are still callable as
+ordinary values, so authors can use them for simple polymorphism:
+
+```js
+function dispatch(handler, event) {
+  handler(event);
+}
+```
+
+Private library functions cannot be used as event handlers from document code,
+because they cannot be materialized as document-visible function references.
+Host methods are not function-reference values in the first callback slice;
+event handlers point only to LJS document/library functions.
+
 Event object base fields:
 
 | Field | Type |
