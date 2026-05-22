@@ -332,6 +332,7 @@ Implemented scope:
 - string values are stored as ordinary strings; `StringLengthLimit` is the
   runtime policy limit rather than a `ShortString` storage ceiling;
 - `ExpressionDepthLimit = 256` guards deeply nested expression AST evaluation;
+- `HostObjectLimit = 1000` caps host object handles created during a script run;
 - `TokenCountLimit = 4096` is enforced before AST construction;
 - `CliDebugLjsRuntimeProfile` includes the CLI host bindings, while
   `IsolatedLjsRuntimeProfile` exposes no host objects;
@@ -340,6 +341,9 @@ Implemented scope:
 - host bindings carry a handler kind; implemented handlers append output
   records for CLI tests, create a drawing-only canvas context handle, or create
   an element handle for visual property writes;
+- host-object methods dispatch by handle kind; the current canvas handle has
+  drawing methods, while element method calls fail as `element.<method>` until
+  such methods exist;
 - profile capabilities gate which host bindings are registered;
 - every scope charges one frame-overhead slot;
 - every `let` variable and function parameter binding charges one slot;
@@ -351,10 +355,8 @@ Still planned:
 
 - decide whether host calls consume any stack budget once richer host APIs
   exist.
-- add an explicit `HostObjectLimit` before raising `StepLimit` or introducing
-  long-lived host handles;
-- dispatch host-object methods by `TLjsHostObjectKind` before adding the first
-  element method;
+- decide whether host object handles need lifetime/release semantics before
+  long-lived host objects or event callbacks exist;
 - decide whether nested `function` declarations should be specified as global
   hoisting or rejected in nested statement positions.
 

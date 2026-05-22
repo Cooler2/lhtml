@@ -193,6 +193,7 @@ Current and likely limits:
 - runtime output record limit: `1000` records;
 - runtime string length limit: `255` bytes/chars by default;
 - runtime expression depth limit: `256` nested AST eval frames;
+- runtime host object limit: `1000` handles;
 - runtime token count limit: `4096` tokens;
 
 The preferred recursion/memory guard is a stack-size limit, not a plain call
@@ -228,6 +229,13 @@ Expression depth accounting:
 - this catches deeply nested expression ASTs separately from call-stack slot
   accounting;
 - exceeding the limit raises `Script runtime expression depth limit exceeded`.
+
+Host object accounting:
+
+- every host object handle created by a root host API counts against
+  `HostObjectLimit`;
+- handles are currently kept for the duration of the script run;
+- exceeding the limit raises `Script runtime host object limit exceeded`.
 
 Token count accounting:
 

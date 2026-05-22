@@ -30,6 +30,7 @@ type
     OutputRecordLimit: Integer;
     StringLengthLimit: Integer;
     ExpressionDepthLimit: Integer;
+    HostObjectLimit: Integer;
     TokenCountLimit: Integer;
     HostBindings: TLjsHostBindingArray;
     DomRoot: TNode;
@@ -62,6 +63,7 @@ const
   LJS_DEFAULT_OUTPUT_RECORD_LIMIT = 1000;
   LJS_DEFAULT_STRING_LENGTH_LIMIT = 255;
   LJS_DEFAULT_EXPRESSION_DEPTH_LIMIT = 256;
+  LJS_DEFAULT_HOST_OBJECT_LIMIT = 1000;
   LJS_DEFAULT_TOKEN_COUNT_LIMIT = 4096;
   LJS_CALL_FRAME_SLOT_OVERHEAD = 1;
 
@@ -127,6 +129,7 @@ type
     FStackSlotLimit: Integer;
     FStringLengthLimit: Integer;
     FExpressionDepthLimit: Integer;
+    FHostObjectLimit: Integer;
     FCapabilities: TLjsCapabilitySet;
     FDomRoot: TNode;
     FHostBindings: array of TLjsRuntimeHostBinding;
@@ -148,6 +151,8 @@ type
     procedure AppendOutput(const Prefix: string; const Value: TLjsValue);
     function MakeStringValue(const Value: string): TLjsValue;
     function MakeHostObjectValue(Kind: TLjsHostObjectKind): TLjsValue;
+    function RequireHostObjectId(const Value: TLjsValue;
+      const OpName: string): Integer;
     function RequireHostObject(const Value: TLjsValue;
       Kind: TLjsHostObjectKind; const OpName: string): Integer;
     function FindElementById(Node: TNode; const Id: string): TNode;
@@ -158,6 +163,8 @@ type
     procedure ExecuteHostBinding(const Binding: TLjsRuntimeHostBinding;
       const Args: array of TLjsValue; out ReturnValue: TLjsValue);
     function CallRootHost(const FullName: string;
+      const Args: array of TLjsValue): TLjsValue;
+    function CallCanvasMethod(const ObjectId: Integer; const AMethodName: string;
       const Args: array of TLjsValue): TLjsValue;
     function CallHostObjectMethod(const Target: TLjsValue; const AMethodName: string;
       const Args: array of TLjsValue): TLjsValue;
@@ -310,6 +317,7 @@ begin
   Result.OutputRecordLimit := LJS_DEFAULT_OUTPUT_RECORD_LIMIT;
   Result.StringLengthLimit := LJS_DEFAULT_STRING_LENGTH_LIMIT;
   Result.ExpressionDepthLimit := LJS_DEFAULT_EXPRESSION_DEPTH_LIMIT;
+  Result.HostObjectLimit := LJS_DEFAULT_HOST_OBJECT_LIMIT;
   Result.TokenCountLimit := LJS_DEFAULT_TOKEN_COUNT_LIMIT;
   Result.DomRoot := nil;
 end;
@@ -349,6 +357,7 @@ begin
   FStackSlotLimit := Profile.StackSlotLimit;
   FStringLengthLimit := Profile.StringLengthLimit;
   FExpressionDepthLimit := Profile.ExpressionDepthLimit;
+  FHostObjectLimit := Profile.HostObjectLimit;
   FCapabilities := Profile.Capabilities;
   FDomRoot := Profile.DomRoot;
   SetLength(FScopes, 1);
@@ -523,6 +532,9 @@ var
   N: Integer;
 begin
   N := Length(FHostObjects);
+  if N + 1 > FHostObjectLimit then
+    raise Exception.CreateFmt('Script runtime host object limit exceeded: %d > %d',
+      [N + 1, FHostObjectLimit]);
   SetLength(FHostObjects, N + 1);
   FHostObjects[N].Kind := Kind;
   FHostObjects[N].Name := '';
@@ -531,8 +543,8 @@ begin
   Result.HostObjectId := N;
 end;
 
-function TLjsRuntime.RequireHostObject(const Value: TLjsValue;
-  Kind: TLjsHostObjectKind; const OpName: string): Integer;
+function TLjsRuntime.RequireHostObjectId(const Value: TLjsValue;
+  const OpName: string): Integer;
 begin
   if Value.Kind <> lvHostObject then
     raise Exception.CreateFmt('Script host method %s expects host object, got %s',
@@ -540,10 +552,16 @@ begin
   if (Value.HostObjectId < 0) or (Value.HostObjectId > High(FHostObjects)) then
     raise Exception.CreateFmt('Script host method %s got invalid host object',
       [OpName]);
-  if FHostObjects[Value.HostObjectId].Kind <> Kind then
+  Result := Value.HostObjectId;
+end;
+
+function TLjsRuntime.RequireHostObject(const Value: TLjsValue;
+  Kind: TLjsHostObjectKind; const OpName: string): Integer;
+begin
+  Result := RequireHostObjectId(Value, OpName);
+  if FHostObjects[Result].Kind <> Kind then
     raise Exception.CreateFmt('Script host method %s got incompatible host object',
       [OpName]);
-  Result := Value.HostObjectId;
 end;
 
 function TLjsRuntime.FindElementById(Node: TNode; const Id: string): TNode;
@@ -681,12 +699,11 @@ begin
      EscapeOutputValue(ValueToString(Value))])));
 end;
 
-function TLjsRuntime.CallHostObjectMethod(const Target: TLjsValue;
+function TLjsRuntime.CallCanvasMethod(const ObjectId: Integer;
   const AMethodName: string; const Args: array of TLjsValue): TLjsValue;
 var
   FullName: string;
 begin
-  RequireHostObject(Target, lhoCanvasContext, AMethodName);
   FullName := 'canvas.' + AMethodName;
   if not (lcCanvasBasic in FCapabilities) then
     raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
@@ -713,6 +730,24 @@ begin
   end
   else
     raise Exception.CreateFmt('Unknown script host call: %s', [FullName]);
+end;
+
+function TLjsRuntime.CallHostObjectMethod(const Target: TLjsValue;
+  const AMethodName: string; const Args: array of TLjsValue): TLjsValue;
+var
+  ObjectId: Integer;
+begin
+  ObjectId := RequireHostObjectId(Target, AMethodName);
+  case FHostObjects[ObjectId].Kind of
+    lhoCanvasContext:
+      Result := CallCanvasMethod(ObjectId, AMethodName, Args);
+    lhoElement:
+      raise Exception.CreateFmt('Unknown script host call: element.%s',
+        [AMethodName]);
+  else
+    raise Exception.CreateFmt('Script host method %s got incompatible host object',
+      [AMethodName]);
+  end;
 end;
 
 function TLjsRuntime.EvalExpressionNode(const Expression: TLjsExpression;

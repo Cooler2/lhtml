@@ -702,6 +702,13 @@ begin
     ExpectScriptRuntimeProfileFail('dom visual property validation',
       'let el = Document.getElement("warning"); el.borderWidth = "wide";',
       'Attribute borderWidth expects unsigned integer', Profile);
+    ExpectScriptRuntimeProfileFail('element method dispatch',
+      'let el = Document.getElement("warning"); el.flash();',
+      'Unknown script host call: element.flash', Profile);
+    Profile.HostObjectLimit := 1;
+    ExpectScriptRuntimeProfileFail('host object limit',
+      'let a = Document.getElement("warning"); let b = Document.getElement("warning");',
+      'Script runtime host object limit exceeded', Profile);
     WriteLn('OK script runtime dom visual mutation');
   finally
     Root.Free;
