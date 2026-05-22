@@ -133,6 +133,16 @@ Debug.log(MathLib.add(2, 3));
 This slice does not define `src`, external resources, binary resource
 representation, or cross-origin loading yet.
 
+Inline libraries have two author-facing uses:
+
+- bundled isolated dependencies: a build step may place library source directly
+  in the document to reduce requests, support self-contained/offline documents,
+  or improve cold-start behavior while preserving the library sandbox;
+- private module scope: because document scripts have a flat top-level function
+  table and nested function declarations are rejected, a library gives authors a
+  simple container for private helper functions and future private globals while
+  exposing only the `public` interface.
+
 A runtime profile may register explicit library bindings:
 
 ```text
@@ -180,7 +190,7 @@ Inline `<library>` elements require an `interface` attribute, are allowed only
 directly under `<lhtml>`, and expose one interface member per listed public
 function. Document scripts below the library can call these members through
 `InterfaceName.functionName(...)`. Functions not listed in `public` are not
-registered in the document profile.
+registered in the document profile, which keeps implementation helpers private.
 
 Document code calls the bound function through the interface-like member-call
 shape:

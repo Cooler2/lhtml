@@ -395,11 +395,20 @@ Normative basis: `lht-spec-part3.md` Section 9.8 plus
 Current stable direction:
 
 - `<library>` is top-level only;
+- inline libraries are valid as bundled isolated dependencies and as private
+  module scopes for helper code;
 - libraries have isolated globals;
 - libraries cannot access document globals;
 - libraries cannot access DOM, storage, network, or caller globals;
 - public interface is declared with a top-level `public { ... }` block;
 - dependencies are injected by the caller.
+
+Inline `<library interface="Name">...</library>` is not merely a test
+mechanism. It is the same authority boundary as an external library, packaged
+inside the document. This is useful for self-contained/offline documents,
+latency-sensitive bundled output, and for author code that needs private helper
+functions without introducing nested declarations or closures into document
+scripts.
 
 `public { ... }` is a declarative library interface list, not a runtime
 statement. It is allowed anywhere at top level, but the preferred source style
